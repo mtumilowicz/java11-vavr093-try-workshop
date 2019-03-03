@@ -6,8 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier
-
+import java.util.function.Supplier 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -202,5 +201,24 @@ class Answers extends Specification {
         then:
         successCounter.get() == 1
         failureCounter.get() == 1
+    }
+
+    def "find by id, otherwise try to find by name, otherwise failure"() {
+        given:
+        def realId = 1
+        def realName = "Michal"
+        and:
+        def fakeId = 2
+        def fakeName = "not-found"
+
+        when:
+        def foundById = Repository.findById(realId).orElse({ Repository.findByName(realName) })
+        def foundByName = Repository.findById(fakeId).orElse({ Repository.findByName(realName) })
+        def notFound = Repository.findById(fakeId).orElse({ Repository.findByName(fakeName) })
+
+        then:
+        Try.success("found-by-id") == foundById
+        Try.success("found-by-name") == foundByName
+        notFound.cause.class == UserCannotBeFound
     }
 }

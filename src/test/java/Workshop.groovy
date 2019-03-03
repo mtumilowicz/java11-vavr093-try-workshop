@@ -197,4 +197,23 @@ class Workshop extends Specification {
         successCounter.get() == 1
         failureCounter.get() == 1
     }
+
+    def "find by id, otherwise try to find by name, otherwise failure"() {
+        given:
+        def realId = 1
+        def realName = "Michal"
+        and:
+        def fakeId = 2
+        def fakeName = "not-found"
+
+        when:
+        def foundById = Repository.findById(realId) // handle case here
+        def foundByName = Repository.findById(fakeId) // handle case here
+        def notFound = Repository.findById(fakeId) // handle case here
+
+        then:
+        Try.success("found-by-id") == foundById
+        Try.success("found-by-name") == foundByName
+        notFound.cause.class == UserCannotBeFound
+    }
 }
