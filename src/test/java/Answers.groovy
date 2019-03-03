@@ -2,8 +2,7 @@ import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.util.function.BinaryOperator
-import java.util.function.Function
-
+import java.util.function.Function 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -30,8 +29,8 @@ class Answers extends Specification {
 
         then:
         tried.failure
-        tried.getCause().class == ArithmeticException
-        tried.getCause().message == "Division by zero"
+        tried.cause.class == ArithmeticException
+        tried.cause.message == "Division by zero"
     }
 
     def "wrap parseInt with try, and invoke in on 1 and a, then verify success and failure"() {
@@ -46,8 +45,8 @@ class Answers extends Specification {
         parsed.success
         parsed.get() == 1
         notParsed.failure
-        notParsed.getCause().class == NumberFormatException
-        notParsed.getCause().message == 'For input string: "a"'
+        notParsed.cause.class == NumberFormatException
+        notParsed.cause.message == 'For input string: "a"'
     }
 
 }
