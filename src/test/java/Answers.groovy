@@ -4,7 +4,9 @@ import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
-import java.util.function.Function 
+import java.util.function.Function
+import java.util.function.Predicate
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -147,5 +149,23 @@ class Answers extends Specification {
         dived.failure
         dived.cause.class == NoSuchElementException
         dived.cause.message == "Predicate does not hold for 0"
+    }
+
+    def "if value > 2 do nothing, otherwise failure"() {
+        given:
+        Predicate<Integer> moreThanTwo = { it > 2 }
+        def three = Try.of({ 3 })
+        def two = Try.of({ 2 })
+
+        when:
+        def filteredThree = three.filter(moreThanTwo)
+        def filteredTwo = two.filter(moreThanTwo)
+        
+        then:
+        filteredThree.success
+        filteredThree.get() == 3
+        filteredTwo.failure
+        filteredTwo.cause.class == NoSuchElementException
+        filteredTwo.cause.message == "Predicate does not hold for 2"
     }
 }
