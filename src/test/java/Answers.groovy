@@ -227,13 +227,18 @@ class Answers extends Specification {
         given:
         def defaultResponse = "default response"
         def databaseConnectionError = 2
+        def realId = 1
 
         when:
-        def byId = Repository.findById(databaseConnectionError)
-                .recover(DatabaseConnectionProblem.class, { defaultResponse })
+        def byIdSuccess = Repository.findById(realId)
+                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
+        def byIdRecovered = Repository.findById(databaseConnectionError)
+                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
 
         then:
-        byId.success
-        byId.get() == defaultResponse
+        byIdSuccess.success
+        byIdSuccess.get() == "found-by-id"
+        byIdRecovered.success
+        byIdRecovered.get() == defaultResponse
     }
 }

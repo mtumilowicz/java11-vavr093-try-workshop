@@ -221,12 +221,16 @@ class Workshop extends Specification {
         given:
         def defaultResponse = "default response"
         def databaseConnectionError = 2
+        def realId = 1
 
         when:
-        def byId = Repository.findById(databaseConnectionError) // recover here with defaultResponse
+        def byIdSuccess = Repository.findById(realId) // recover here with defaultResponse
+        def byIdRecovered = Repository.findById(databaseConnectionError) // recover here with defaultResponse
 
         then:
-        byId.success
-        byId.get() == defaultResponse
+        byIdSuccess.success
+        byIdSuccess.get() == "found-by-id"
+        byIdRecovered.success
+        byIdRecovered.get() == defaultResponse
     }
 }
