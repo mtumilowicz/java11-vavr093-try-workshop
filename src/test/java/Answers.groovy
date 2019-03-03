@@ -161,7 +161,7 @@ class Answers extends Specification {
         when:
         def filteredThree = three.filter(moreThanTwo)
         def filteredTwo = two.filter(moreThanTwo)
-        
+
         then:
         filteredThree.success
         filteredThree.get() == 3
@@ -176,13 +176,31 @@ class Answers extends Specification {
         def kid = Try.of({ new Person(10) })
 
         when:
-        def filteredAdult = adult.filter(Person.isAdult(), {new NotAnAdultException()} as Supplier)
-        def filteredKid = kid.filter(Person.isAdult(), {new NotAnAdultException()} as Supplier)
+        def filteredAdult = adult.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
+        def filteredKid = kid.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
 
         then:
         filteredAdult.success
         filteredKid.failure
         filteredKid.cause.class == NotAnAdultException
         !filteredKid.cause.message
+    }
+
+    def "on failure increment failure counter, on success increment success counter"() {
+        given:
+        def failureCounter = new AtomicInteger()
+        def successCounter = new AtomicInteger()
+        def existingId = 1
+        def databaseConnectionProblem = 2
+
+        when:
+        Repository.findById(existingId)
+                .onSuccess({ successCounter.incrementAndGet() })
+        Repository.findById(databaseConnectionProblem)
+                .onFailure({ cause -> failureCounter.incrementAndGet() })
+
+        then:
+        successCounter.get() == 1
+        failureCounter.get() == 1
     }
 }

@@ -4,7 +4,8 @@ import spock.lang.Specification
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate 
+import java.util.function.Predicate
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -179,5 +180,21 @@ class Workshop extends Specification {
         filteredKid.failure
         filteredKid.cause.class == NotAnAdultException
         !filteredKid.cause.message
+    }
+
+    def "on failure increment failure counter, on success increment success counter"() {
+        given:
+        def failureCounter = new AtomicInteger()
+        def successCounter = new AtomicInteger()
+        def existingId = 1
+        def databaseConnectionProblem = 2
+
+        when:
+        Repository.findById(existingId) // handle side effect here
+        Repository.findById(databaseConnectionProblem) // handle side effect here
+
+        then:
+        successCounter.get() == 1
+        failureCounter.get() == 1
     }
 }
