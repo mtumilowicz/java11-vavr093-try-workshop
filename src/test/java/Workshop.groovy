@@ -88,4 +88,22 @@ class Workshop extends Specification {
         withFailure.cause.class == NumberFormatException
         withFailure.cause.message == 'For input string: "a"'
     }
+
+    def "square parsed number, or do nothing"() {
+        given:
+        Function<String, Integer> parse = { i -> Integer.parseInt(i) }
+        def parsed = Try.of({ -> parse.apply("2") })
+        def notParsed = Try.of({ -> parse.apply("a") })
+
+        when:
+        def squared = parsed // square
+        def fail = notParsed // square
+
+        then:
+        squared.success
+        squared.get() == 4
+        fail.failure
+        fail.cause.class == NumberFormatException
+        fail.cause.message == 'For input string: "a"'
+    }
 }
