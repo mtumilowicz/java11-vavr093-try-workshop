@@ -1,11 +1,11 @@
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.nio.file.NoSuchFileException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate
-
+import java.util.function.Predicate 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -232,5 +232,24 @@ class Workshop extends Specification {
         byIdSuccess.get() == "found-by-id"
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
+    }
+
+    def "vavr try with resources success"() {
+        when:
+        def concat = TWR.usingVavr("src/test/resources/lines.txt")
+
+        then:
+        concat.success
+        concat.get() == "1,2,3"
+    }
+
+    def "vavr try with resources failure - file does not exists"() {
+        when:
+        def concat = TWR.usingVavr("NonExistingFile.txt")
+
+        then:
+        concat.failure
+        concat.cause.class == NoSuchFileException
+        concat.cause.message == 'NonExistingFile.txt'
     }
 }
