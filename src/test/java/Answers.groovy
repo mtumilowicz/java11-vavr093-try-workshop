@@ -8,6 +8,25 @@ import java.util.function.Function
  * Created by mtumilowicz on 2019-03-03.
  */
 class Answers extends Specification {
+    
+    def "create successful try with value 1"() {
+        given:
+        def successful = Try.success(1)
+        
+        expect:
+        successful.success
+        successful.get() == 1
+    }
+
+    def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
+        given:
+        def successful = Try.failure(new IllegalStateException("wrong status"))
+
+        expect:
+        successful.failure
+        successful.cause.class == IllegalStateException
+        successful.cause.message == "wrong status"
+    }
 
     def "wrap div (4 / 2) with try and verify success and output"() {
         given:

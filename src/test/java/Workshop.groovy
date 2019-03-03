@@ -9,6 +9,25 @@ import java.util.function.Function
  */
 class Workshop extends Specification {
 
+    def "create successful try with value 1"() {
+        given:
+        def successful = false // create here
+
+        expect:
+        successful.success
+        successful.get() == 1
+    }
+
+    def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
+        given:
+        def successful = false // create here
+
+        expect:
+        successful.failure
+        successful.cause.class == IllegalStateException
+        successful.cause.message == "wrong status"
+    }
+
     def "wrap div (4 / 2) with try and verify success and output"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
