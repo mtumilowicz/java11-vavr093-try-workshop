@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.function.Supplier
 
 /**
  * Created by mtumilowicz on 2019-03-03.
@@ -167,5 +168,21 @@ class Answers extends Specification {
         filteredTwo.failure
         filteredTwo.cause.class == NoSuchElementException
         filteredTwo.cause.message == "Predicate does not hold for 2"
+    }
+
+    def "if person.isAdult do nothing, otherwise customized error - NotAnAdultException"() {
+        given:
+        def adult = Try.of({ new Person(20) })
+        def kid = Try.of({ new Person(10) })
+
+        when:
+        def filteredAdult = adult.filter(Person.isAdult(), {new NotAnAdultException()} as Supplier)
+        def filteredKid = kid.filter(Person.isAdult(), {new NotAnAdultException()} as Supplier)
+
+        then:
+        filteredAdult.success
+        filteredKid.failure
+        filteredKid.cause.class == NotAnAdultException
+        !filteredKid.cause.message
     }
 }

@@ -4,8 +4,7 @@ import spock.lang.Specification
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate
-
+import java.util.function.Predicate 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -164,5 +163,21 @@ class Workshop extends Specification {
         filteredTwo.failure
         filteredTwo.cause.class == NoSuchElementException
         filteredTwo.cause.message == "Predicate does not hold for 2"
+    }
+
+    def "if person.isAdult do nothing, otherwise customized error - NotAnAdultException"() {
+        given:
+        def adult = Try.of({ new Person(20) })
+        def kid = Try.of({ new Person(10) })
+
+        when:
+        def filteredAdult = adult  // filter here using NotAnAdultException
+        def filteredKid = kid  // filter here using NotAnAdultException
+
+        then:
+        filteredAdult.success
+        filteredKid.failure
+        filteredKid.cause.class == NotAnAdultException
+        !filteredKid.cause.message
     }
 }
