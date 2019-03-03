@@ -4,8 +4,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
-import java.util.function.Function
-
+import java.util.function.Function 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -130,5 +129,23 @@ class Answers extends Specification {
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
+    }
+
+    def "map value with a partial function; if not defined -> empty"() {
+        given:
+        Function<String, Integer> parse = { Integer.parseInt(it) }
+        def zero = Try.of({ parse.apply("0") })
+        def two = Try.of({ parse.apply("2") })
+
+        when:
+        def dived = zero.collect(new Functions().div())
+        def summed = two.collect(new Functions().add())
+
+        then:
+        summed.success
+        summed.get() == 7
+        dived.failure
+        dived.cause.class == NoSuchElementException
+        dived.cause.message == "Predicate does not hold for 0"
     }
 }

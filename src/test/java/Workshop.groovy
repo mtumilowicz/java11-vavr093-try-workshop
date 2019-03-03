@@ -128,4 +128,22 @@ class Workshop extends Specification {
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
     }
+
+    def "map value with a partial function; if not defined -> empty"() {
+        given:
+        Function<String, Integer> parse = { Integer.parseInt(it) }
+        def zero = Try.of({ parse.apply("0") })
+        def two = Try.of({ parse.apply("2") })
+
+        when:
+        def dived = zero // map here using new Functions().div()
+        def summed = two // map here using new Functions().add()
+
+        then:
+        summed.success
+        summed.get() == 7
+        dived.failure
+        dived.cause.class == NoSuchElementException
+        dived.cause.message == "Predicate does not hold for 0"
+    }
 }
