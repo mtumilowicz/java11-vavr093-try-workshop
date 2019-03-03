@@ -2,6 +2,7 @@ import io.vavr.collection.List
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
 
@@ -105,6 +106,27 @@ class Answers extends Specification {
         then:
         squared.success
         squared.get() == 4
+        fail.failure
+        fail.cause.class == NumberFormatException
+        fail.cause.message == 'For input string: "a"'
+    }
+    
+    def "if success increment counter, otherwise do nothing"() {
+        given:
+        Function<String, Integer> parse = { i -> Integer.parseInt(i) }
+        def parsed = Try.of({ -> parse.apply("2") })
+        def notParsed = Try.of({ -> parse.apply("a") })
+        def successCounter = new AtomicInteger()
+
+        when:
+        def squared = parsed.andThen({ successCounter.incrementAndGet() })
+        def fail = notParsed.andThen({ successCounter.incrementAndGet() })
+
+        then:
+        squared.success
+        squared.get() == 2
+        successCounter.get() == 1
+        and:
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
