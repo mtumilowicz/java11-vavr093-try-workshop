@@ -1,3 +1,4 @@
+import io.vavr.collection.List
 import io.vavr.control.Try
 import spock.lang.Specification
 
@@ -49,4 +50,25 @@ class Answers extends Specification {
         notParsed.cause.message == 'For input string: "a"'
     }
 
+    def "sum all values of try sequence or return the first failure"() {
+        given:
+        Function<String, Integer> parse = { i -> Integer.parseInt(i)}
+        def parsed1 = Try.of({ -> parse.apply("1")})
+        def parsed2 = Try.of({ -> parse.apply("2")})
+        def parsed3 = Try.of({ -> parse.apply("3")})
+        def parsed4 = Try.of({ -> parse.apply("4")})
+        def failure = Try.of({ -> parse.apply("a")})
+
+        when:
+        def sum = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4))
+                .map({seq -> seq.sum()})
+        def withFailure = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4, failure))
+                .map({seq -> seq.sum()})
+        
+        then:
+        sum.get() == 10
+        withFailure.failure
+        withFailure.cause.class == NumberFormatException
+        withFailure.cause.message == 'For input string: "a"'
+    }
 }
