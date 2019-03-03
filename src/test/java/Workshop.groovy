@@ -216,4 +216,17 @@ class Workshop extends Specification {
         Try.success("found-by-name") == foundByName
         notFound.cause.class == UserCannotBeFound
     }
+
+    def "if database connection error recover with default response"() {
+        given:
+        def defaultResponse = "default response"
+        def databaseConnectionError = 2
+
+        when:
+        def byId = Repository.findById(databaseConnectionError) // recover here with defaultResponse
+
+        then:
+        byId.success
+        byId.get() == defaultResponse
+    }
 }

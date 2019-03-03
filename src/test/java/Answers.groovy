@@ -6,7 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier 
+import java.util.function.Supplier
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -140,8 +141,8 @@ class Answers extends Specification {
         def two = Try.of({ parse.apply("2") })
 
         when:
-        def dived = zero.collect(new Functions().div())
-        def summed = two.collect(new Functions().add())
+        def dived = zero.collect(Functions.div())
+        def summed = two.collect(Functions.add())
 
         then:
         summed.success
@@ -220,5 +221,19 @@ class Answers extends Specification {
         Try.success("found-by-id") == foundById
         Try.success("found-by-name") == foundByName
         notFound.cause.class == UserCannotBeFound
+    }
+
+    def "if database connection error recover with default response"() {
+        given:
+        def defaultResponse = "default response"
+        def databaseConnectionError = 2
+
+        when:
+        def byId = Repository.findById(databaseConnectionError)
+                .recover(DatabaseConnectionProblem.class, { defaultResponse })
+
+        then:
+        byId.success
+        byId.get() == defaultResponse
     }
 }
