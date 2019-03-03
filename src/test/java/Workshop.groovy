@@ -165,7 +165,7 @@ class Workshop extends Specification {
         filteredTwo.cause.message == "Predicate does not hold for 2"
     }
 
-    def "if person.isAdult do nothing, otherwise customized error - NotAnAdultException"() {
+    def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
         def adult = Try.of({ new Person(20) })
         def kid = Try.of({ new Person(10) })
