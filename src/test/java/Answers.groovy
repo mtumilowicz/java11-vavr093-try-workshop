@@ -57,7 +57,7 @@ class Answers extends Specification {
         tried.cause.message == "Division by zero"
     }
 
-    def "wrap parseInt with try, and invoke in on 1 and a, then verify success and failure"() {
+    def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
 
@@ -134,7 +134,7 @@ class Answers extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "map value with a partial function; if not defined -> empty"() {
+    def "map value with a partial function; if not defined -> NoSuchElementException"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def zero = Try.of({ parse.apply("0") })
@@ -223,7 +223,7 @@ class Answers extends Specification {
         notFound.cause.class == UserCannotBeFound
     }
 
-    def "if database connection error recover with default response"() {
+    def "if database connection error, recover with default response"() {
         given:
         def defaultResponse = "default response"
         def databaseConnectionError = 2
@@ -242,7 +242,7 @@ class Answers extends Specification {
         byIdRecovered.get() == defaultResponse
     }
 
-    def "vavr try with resources success"() {
+    def "vavr try with resources: success"() {
         when:
         def concat = TWRAnswer.usingVavr("src/test/resources/lines.txt")
         
@@ -251,7 +251,7 @@ class Answers extends Specification {
         concat.get() == "1,2,3"
     }
 
-    def "vavr try with resources failure - file does not exists"() {
+    def "vavr try with resources: failure - file does not exists"() {
         when:
         def concat = TWRAnswer.usingVavr("NonExistingFile.txt")
 
