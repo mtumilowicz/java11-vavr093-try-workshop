@@ -7,7 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier 
+import java.util.function.Supplier
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -204,9 +205,22 @@ class Answers extends Specification {
         failureCounter.get() == 1
     }
 
-    def "find by id, otherwise try to find by name, otherwise failure"() {
-        expect:
-        1 == 1
+    def "try to find in database then try to find in backup"() {
+        given:
+        def fromDatabaseId = 1
+        def fromCacheId = 2
+        def backupConnectionProblemId = 3
+
+        when:
+        def fromDatabase = RepositoryAnswer.findById(fromDatabaseId)
+        def fromCache = RepositoryAnswer.findById(fromCacheId)
+        def backupConnectionProblem = RepositoryAnswer.findById(backupConnectionProblemId)
+
+        then:
+        fromDatabase == Try.of({ "from database" })
+        fromCache == Try.of({ "from cache" })
+        backupConnectionProblem.failure
+        backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
     }
 
     def "if database connection error, recover with default response"() {
@@ -231,7 +245,7 @@ class Answers extends Specification {
     def "vavr try with resources: success"() {
         when:
         def concat = TWRAnswer.usingVavr("src/test/resources/lines.txt")
-        
+
         then:
         concat.success
         concat.get() == "1,2,3"

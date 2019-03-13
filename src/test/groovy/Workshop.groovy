@@ -5,7 +5,8 @@ import java.nio.file.NoSuchFileException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate 
+import java.util.function.Predicate
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -198,9 +199,22 @@ class Workshop extends Specification {
         failureCounter.get() == 1
     }
 
-    def "find by id, otherwise try to find by name, otherwise failure"() {
-        expect:
-        1 == 1
+    def "try to find in database then try to find in backup"() {
+        given:
+        def fromDatabaseId = 1
+        def fromCacheId = 2
+        def backupConnectionProblemId = 3
+
+        when:
+        def fromDatabase = Repository.findById(fromDatabaseId)
+        def fromCache = Repository.findById(fromCacheId)
+        def backupConnectionProblem = Repository.findById(backupConnectionProblemId)
+
+        then:
+        fromDatabase == Try.of({ "from database" })
+        fromCache == Try.of({ "from cache" })
+        backupConnectionProblem.failure
+        backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
     }
 
     def "if database connection error, recover with default response"() {

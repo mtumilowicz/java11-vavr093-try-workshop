@@ -6,11 +6,11 @@ import io.vavr.control.Try;
 class Repository {
     /*
     implement function that will try to:
-        1. return result from cache (CacheRepository)
-        1. if not found: return result from database (DatabaseRepository)
+        1. return result from database (DatabaseRepository)
+        1. if not found: return result from backup (BackupRepository)
      */
     static Try<String> findById(int id) {
-        return DatabaseRepository.findById(id).orElse(() -> BackupRepository.findById(id));
+        return Try.failure(new NullPointerException());
     }
 }
 class DatabaseRepository {
