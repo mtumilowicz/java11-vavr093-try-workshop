@@ -1,14 +1,15 @@
 import io.vavr.control.Try;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
-public class LockExecutorAnswer {
-    private final ReadWriteLock lock;
-
-    LockExecutorAnswer(ReadWriteLock lock) {
-        this.lock = lock;
-    }
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
+class LockExecutorAnswer {
+    ReadWriteLock lock;
 
     <T> Try<T> write(Supplier<T> action) {
         lock.writeLock().lock();
