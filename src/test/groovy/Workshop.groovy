@@ -1,3 +1,4 @@
+import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
@@ -29,6 +30,21 @@ class Workshop extends Specification {
         successful.failure
         successful.cause.class == IllegalStateException
         successful.cause.message == "wrong status"
+    }
+
+    def "convert Try to Option"() {
+        given:
+        def success = Try.of({ 1 })
+        def failure = Try.failure(new IllegalStateException())
+        
+        when:
+        def successOption = success // convert here, hint: toOption()
+        def failureOption = failure // convert here, hint: toOption()
+        
+        then:
+        successOption.defined
+        successOption == Option.some(1)
+        failureOption.empty
     }
 
     def "wrap div (4 / 2) with try and verify success and output"() {
