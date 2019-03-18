@@ -1,3 +1,5 @@
+import io.vavr.Function1
+import io.vavr.PartialFunction
 import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
@@ -153,9 +155,15 @@ class Workshop extends Specification {
         def zero = Try.of({ parse.apply("0") })
         def two = Try.of({ parse.apply("2") })
 
+        and:
+        PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
+                .partial({ it != 0 })
+        PartialFunction<Integer, Integer> add = Function1.of({ 5 + it })
+                .partial({ true })
+
         when:
-        def dived = zero // map here using new Functions().div()
-        def summed = two // map here using new Functions().add()
+        def dived = zero // map here using div
+        def summed = two // map here using add
 
         then:
         summed.success

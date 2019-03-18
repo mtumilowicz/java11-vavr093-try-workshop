@@ -1,3 +1,5 @@
+import io.vavr.Function1
+import io.vavr.PartialFunction
 import io.vavr.collection.List
 import io.vavr.control.Option
 import io.vavr.control.Try
@@ -156,10 +158,16 @@ class Answers extends Specification {
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def zero = Try.of({ parse.apply("0") })
         def two = Try.of({ parse.apply("2") })
+        
+        and:
+        PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
+                .partial({ it != 0 })
+        PartialFunction<Integer, Integer> add = Function1.of({ 5 + it })
+                .partial({ true })
 
         when:
-        def dived = zero.collect(Functions.div())
-        def summed = two.collect(Functions.add())
+        def dived = zero.collect(div)
+        def summed = two.collect(add)
 
         then:
         summed.success
