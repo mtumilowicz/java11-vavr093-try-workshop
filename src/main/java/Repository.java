@@ -10,7 +10,7 @@ class Repository {
         1. if not found: return result from backup (BackupRepository)
      */
     static Try<String> findById(int id) {
-        return Try.failure(new NullPointerException());
+        return null;
     }
 }
 class DatabaseRepository {
