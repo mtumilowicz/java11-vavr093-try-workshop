@@ -12,6 +12,10 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 
+import static io.vavr.API.$
+import static io.vavr.API.Case
+import static io.vavr.Predicates.instanceOf
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -353,11 +357,24 @@ class Answers extends Specification {
         findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
+    
+    def "map exceptions"() {
+        given:
+
+        expect:
+        Try.of({Integer.parseInt("a")}).mapFailure(
+                Case($(instanceOf(NumberFormatException.class)), {new CannotParseInteger(it.message)} as Function)
+        ).cause.class == CannotParseInteger // transform to function
+    }
 
     /**
      * to do:
      * flatMap - carEngine
-     * mapFailure - 3rd party library integration with domain exceptions
      * toEither
      */
+    class CannotParseInteger extends RuntimeException {
+        CannotParseInteger(String message) {
+            super(message)
+        }
+    }
 }
