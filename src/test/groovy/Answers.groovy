@@ -331,19 +331,27 @@ class Answers extends Specification {
         tried4.failure
         tried4.cause.class == EntityNotFoundException
     }
-    
+
     def "if entity cannot be found in cache try to find in database; if cache is under synchronization with database - return default response"() {
         given:
         def userFromCache = 1
         def databaseConnection = 2
         def userFromDatabase = 4
         def cacheSynchronization = 5
-        
-        expect:
-        Repository.findByIdRecovered(userFromCache).get() == 'from cache'
-        Repository.findByIdRecovered(userFromDatabase).get() == 'from database'
-        Repository.findByIdRecovered(cacheSynchronization).get() == 'cache synchronization with database, try again later'
-        Repository.findByIdRecovered(databaseConnection).get() == 'cannot connect to database'
+
+        when:
+        Function<Integer, Try<String>> findById = {
+            CacheRepository.findById(it)
+                    .recover(CacheSynchronization.class, "cache synchronization with database, try again later")
+                    .recoverWith(CacheUserCannotBeFound.class, { DatabaseRepository.findById(it.getUserId()) })
+                    .recover(DatabaseConnectionProblem.class, "cannot connect to database")
+        }
+
+        then:
+        findById.apply(userFromCache).get() == 'from cache'
+        findById.apply(userFromDatabase).get() == 'from database'
+        findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
+        findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
 
     /**

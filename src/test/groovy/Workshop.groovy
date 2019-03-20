@@ -230,9 +230,9 @@ class Workshop extends Specification {
         def backupConnectionProblemId = 3
 
         when:
-        Try<String> fromDatabase = Repository.findById(fromDatabaseId)
-        Try<String> fromCache = Repository.findById(fromCacheId)
-        Try<String> backupConnectionProblem = Repository.findById(backupConnectionProblemId)
+        Try<String> fromDatabase = RepositoryFacade.findById(fromDatabaseId)
+        Try<String> fromCache = RepositoryFacade.findById(fromCacheId)
+        Try<String> backupConnectionProblem = RepositoryFacade.findById(backupConnectionProblemId)
 
         then:
         fromDatabase.success

@@ -4,7 +4,7 @@ import lombok.Value;
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
-class Repository {
+class RepositoryFacade {
     /*
     implement function that will try to:
         1. return result from database (DatabaseRepository)
@@ -12,13 +12,6 @@ class Repository {
      */
     static Try<String> findById(int id) {
         return null;
-    }
-    
-    static Try<String> findByIdRecovered(int id) {
-        return CacheRepository.findById(id)
-                .recover(CacheSynchronization.class, "cache synchronization with database, try again later")
-                .recoverWith(CacheUserCannotBeFound.class, value -> DatabaseRepository.findById(value.getUserId()))
-                .recover(DatabaseConnectionProblem.class, "cannot connect to database");
     }
 }
 
