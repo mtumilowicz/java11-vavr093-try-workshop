@@ -47,7 +47,7 @@ class Workshop extends Specification {
         failureOption.empty
     }
 
-    def "wrap div (4 / 2) with try and verify success and output"() {
+    def "wrap div (4 / 2) with try and verify success and value"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
@@ -169,7 +169,7 @@ class Workshop extends Specification {
         dived.cause.message == 'Predicate does not hold for 0'
     }
 
-    def "if value > 2 do nothing, otherwise failure"() {
+    def "if value > 2 do nothing, otherwise failure with NoSuchElementException"() {
         given:
         Predicate<Integer> moreThanTwo = { it > 2 }
         Try<Integer> three = Try.of({ 3 })
