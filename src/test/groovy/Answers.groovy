@@ -26,12 +26,12 @@ class Answers extends Specification {
 
     def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
         given:
-        Try<Integer> failure = Try.failure(new IllegalStateException("wrong status"))
+        Try<Integer> failure = Try.failure(new IllegalStateException('wrong status'))
 
         expect:
         failure.failure
         failure.cause.class == IllegalStateException
-        failure.cause.message == "wrong status"
+        failure.cause.message == 'wrong status'
     }
 
     def "convert Try to Option"() {
@@ -71,7 +71,7 @@ class Answers extends Specification {
         then:
         tried.failure
         tried.cause.class == ArithmeticException
-        tried.cause.message == "Division by zero"
+        tried.cause.message == 'Division by zero'
     }
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
@@ -79,8 +79,8 @@ class Answers extends Specification {
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of({ parseInt.apply("1") })
-        Try<Integer> notParsed = Try.of({ parseInt.apply("a") })
+        Try<Integer> parsed = Try.of({ parseInt.apply('1') })
+        Try<Integer> notParsed = Try.of({ parseInt.apply('a') })
 
         then:
         parsed.success
@@ -93,11 +93,11 @@ class Answers extends Specification {
     def "sum all values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed1 = Try.of({ parse.apply("1") })
-        Try<Integer> parsed2 = Try.of({ parse.apply("2") })
-        Try<Integer> parsed3 = Try.of({ parse.apply("3") })
-        Try<Integer> parsed4 = Try.of({ parse.apply("4") })
-        Try<Integer> failure = Try.of({ parse.apply("a") })
+        Try<Integer> parsed1 = Try.of({ parse.apply('1') })
+        Try<Integer> parsed2 = Try.of({ parse.apply('2') })
+        Try<Integer> parsed3 = Try.of({ parse.apply('3') })
+        Try<Integer> parsed4 = Try.of({ parse.apply('4') })
+        Try<Integer> failure = Try.of({ parse.apply('a') })
 
         when:
         Try<Number> sum = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4))
@@ -115,8 +115,8 @@ class Answers extends Specification {
     def "square parsed number, or do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply("2") })
-        Try<Integer> notParsed = Try.of({ parse.apply("a") })
+        Try<Integer> parsed = Try.of({ parse.apply('2') })
+        Try<Integer> notParsed = Try.of({ parse.apply('a') })
 
         when:
         Try<Integer> squared = parsed.map({ it * it })
@@ -133,8 +133,8 @@ class Answers extends Specification {
     def "if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply("2") })
-        Try<Integer> notParsed = Try.of({ parse.apply("a") })
+        Try<Integer> parsed = Try.of({ parse.apply('2') })
+        Try<Integer> notParsed = Try.of({ parse.apply('a') })
         def successCounter = 0
 
         when:
@@ -154,8 +154,8 @@ class Answers extends Specification {
     def "map value with a partial function; if not defined -> NoSuchElementException"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> zero = Try.of({ parse.apply("0") })
-        Try<Integer> two = Try.of({ parse.apply("2") })
+        Try<Integer> zero = Try.of({ parse.apply('0') })
+        Try<Integer> two = Try.of({ parse.apply('2') })
         
         and:
         PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
@@ -172,7 +172,7 @@ class Answers extends Specification {
         summed.get() == 7
         dived.failure
         dived.cause.class == NoSuchElementException
-        dived.cause.message == "Predicate does not hold for 0"
+        dived.cause.message == 'Predicate does not hold for 0'
     }
 
     def "if value > 2 do nothing, otherwise failure"() {
@@ -190,7 +190,7 @@ class Answers extends Specification {
         filteredThree.get() == 3
         filteredTwo.failure
         filteredTwo.cause.class == NoSuchElementException
-        filteredTwo.cause.message == "Predicate does not hold for 2"
+        filteredTwo.cause.message == 'Predicate does not hold for 2'
     }
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
@@ -206,7 +206,6 @@ class Answers extends Specification {
         filteredAdult.success
         filteredKid.failure
         filteredKid.cause.class == NotAnAdultException
-        !filteredKid.cause.message
     }
 
     def "on failure increment failure counter, on success increment success counter"() {
@@ -239,15 +238,15 @@ class Answers extends Specification {
         Try<String> backupConnectionProblem = RepositoryAnswer.findById(backupConnectionProblemId)
 
         then:
-        fromDatabase == Try.of({ "from database" })
-        fromCache == Try.of({ "from cache" })
+        fromDatabase == Try.of({ 'from database' })
+        fromCache == Try.of({ 'from cache' })
         backupConnectionProblem.failure
         backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
     }
 
     def "if database connection error, recover with default response"() {
         given:
-        def defaultResponse = "default response"
+        def defaultResponse = 'default response'
         def databaseConnectionError = 2
         def realId = 1
 
@@ -259,23 +258,23 @@ class Answers extends Specification {
 
         then:
         byIdSuccess.success
-        byIdSuccess.get() == "from database"
+        byIdSuccess.get() == 'from database'
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
     }
 
     def "vavr try with resources: success"() {
         when:
-        Try<String> concat = TWRAnswer.usingVavr("src/test/resources/lines.txt")
+        Try<String> concat = TWRAnswer.usingVavr('src/test/resources/lines.txt')
 
         then:
         concat.success
-        concat.get() == "1,2,3"
+        concat.get() == '1,2,3'
     }
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        Try<String> concat = TWRAnswer.usingVavr("NonExistingFile.txt")
+        Try<String> concat = TWRAnswer.usingVavr('NonExistingFile.txt')
 
         then:
         concat.failure
