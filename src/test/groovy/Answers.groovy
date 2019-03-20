@@ -291,4 +291,14 @@ class Answers extends Specification {
         concat.cause.class == NoSuchFileException
         concat.cause.message == 'NonExistingFile.txt'
     }
+
+    /**
+     * to do:
+     * recover: recover(ex1).recover(ex2)
+     * andThenTry: save to database
+     * map vs mapTry - parsing numbers from request
+     * flatMap - carEngine
+     * mapFailure - 3rd party library integration with domain exceptions
+     * toEither
+     */
 }
