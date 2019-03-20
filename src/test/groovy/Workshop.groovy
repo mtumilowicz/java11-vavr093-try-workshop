@@ -5,11 +5,9 @@ import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.nio.file.NoSuchFileException
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate
-
+import java.util.function.Predicate 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -133,7 +131,7 @@ class Workshop extends Specification {
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> parsed = Try.of({ parse.apply("2") })
         Try<Integer> notParsed = Try.of({ parse.apply("a") })
-        def successCounter = new AtomicInteger()
+        def successCounter = 0
 
         when:
         Try<Integer> squared = parsed // increment here
@@ -142,7 +140,7 @@ class Workshop extends Specification {
         then:
         squared.success
         squared.get() == 2
-        successCounter.get() == 1
+        successCounter == 1
         and:
         fail.failure
         fail.cause.class == NumberFormatException
@@ -209,8 +207,8 @@ class Workshop extends Specification {
 
     def "on failure increment failure counter, on success increment success counter"() {
         given:
-        def failureCounter = new AtomicInteger()
-        def successCounter = new AtomicInteger()
+        def failureCounter = 0
+        def successCounter = 0
         def existingId = 1
         def databaseConnectionProblem = 2
 
@@ -219,8 +217,8 @@ class Workshop extends Specification {
         DatabaseRepository.findById(databaseConnectionProblem) // handle side effect here
 
         then:
-        successCounter.get() == 1
-        failureCounter.get() == 1
+        successCounter == 1
+        failureCounter == 1
     }
 
     def "try to find in database then try to find in backup"() {
