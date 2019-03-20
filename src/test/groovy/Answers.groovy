@@ -26,12 +26,12 @@ class Answers extends Specification {
 
     def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
         given:
-        Try<Integer> successful = Try.failure(new IllegalStateException("wrong status"))
+        Try<Integer> failure = Try.failure(new IllegalStateException("wrong status"))
 
         expect:
-        successful.failure
-        successful.cause.class == IllegalStateException
-        successful.cause.message == "wrong status"
+        failure.failure
+        failure.cause.class == IllegalStateException
+        failure.cause.message == "wrong status"
     }
 
     def "convert Try to Option"() {
@@ -76,11 +76,11 @@ class Answers extends Specification {
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
         given:
-        Function<String, Integer> parse = { Integer.parseInt(it) }
+        Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of({ parse.apply("1") })
-        Try<Integer> notParsed = Try.of({ parse.apply("a") })
+        Try<Integer> parsed = Try.of({ parseInt.apply("1") })
+        Try<Integer> notParsed = Try.of({ parseInt.apply("a") })
 
         then:
         parsed.success
@@ -130,7 +130,7 @@ class Answers extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "if success increment counter, otherwise do nothing"() {
+    def "if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> parsed = Try.of({ parse.apply("2") })

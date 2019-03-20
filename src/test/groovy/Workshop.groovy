@@ -13,23 +13,23 @@ import java.util.function.Predicate
  */
 class Workshop extends Specification {
 
-    def "create successful try with value 1"() {
+    def "create successful Try with value 1"() {
         given:
-        Try<Integer> successful = false // create here
+        Try<Integer> successful = false // create here, hint: success
 
         expect:
         successful.success
         successful.get() == 1
     }
 
-    def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
+    def "create failed Try with cause IllegalStateException with message: 'wrong status' "() {
         given:
-        Try<Integer> successful = false // create here
+        Try<Integer> failure = false // create here, hint: failure
 
         expect:
-        successful.failure
-        successful.cause.class == IllegalStateException
-        successful.cause.message == "wrong status"
+        failure.failure
+        failure.cause.class == IllegalStateException
+        failure.cause.message == "wrong status"
     }
 
     def "convert Try to Option"() {
@@ -55,8 +55,8 @@ class Workshop extends Specification {
         Try<Integer> tried = Try.of({ -1 }) // wrap here
 
         then:
-        false // verify success here
-        false // verify output here
+        false // verify success here, hint: isSuccess()
+        false // verify output here, hint: get()
     }
 
     def "wrap div (4 / 0) with try and verify failure and cause"() {
@@ -67,25 +67,25 @@ class Workshop extends Specification {
         Try<Integer> tried = Try.of({ -1 }) // wrap here
 
         then:
-        false // verify failure here
-        false // verify failure class here
-        false // verify failure message here
+        false // verify failure here, hint: isFailure()
+        false // verify failure class here, hint: getCause(), .class
+        false // verify failure message here, hint: getCause(), getMessage()
     }
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
         given:
-        Function<String, Integer> parse = { Integer.parseInt(it) }
+        Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of({ -1 })
-        Try<Integer> notParsed = Try.of({ -1 })
+        Try<Integer> parsed = Try.of({ -1 }) // wrap here, hint: parse.apply("1")
+        Try<Integer> notParsed = Try.of({ -1 }) // wrap here, hint: parse.apply("a")
 
         then:
-        false // verify success here
-        false // verify output here
-        false // verify failure here
-        false // verify failure class here
-        false // verify failure message here
+        false // verify success here, hint: isSuccess()
+        false // verify output here, hint: get()
+        false // verify failure here, hint: isFailure()
+        false // verify failure class here, hint: getCause(), .class
+        false // verify failure message here, hint: getCause(), getMessage()
     }
 
     def "sum all values of try sequence or return the first failure"() {
@@ -98,8 +98,8 @@ class Workshop extends Specification {
         Try<Integer> failure = Try.of({ parse.apply("a") })
 
         when:
-        Try<Integer> sum = Try.of({ -1 }) // sum parsed1,...,parsed4
-        Try<Integer> withFailure = Try.of({ -1 }) // sum parsed1,...,parsed4,failure
+        Try<Integer> sum = Try.of({ -1 }) // sum here, hint: sequence, map
+        Try<Integer> withFailure = Try.of({ -1 }) // sum here, hint: sequence, map
 
         then:
         sum.get() == 10
@@ -115,8 +115,8 @@ class Workshop extends Specification {
         Try<Integer> notParsed = Try.of({ parse.apply("a") })
 
         when:
-        Try<Integer> squared = parsed // square
-        Try<Integer> fail = notParsed // square
+        Try<Integer> squared = parsed // square here, hint: map
+        Try<Integer> fail = notParsed // square here, hint: map
 
         then:
         squared.success
@@ -126,7 +126,7 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "if success increment counter, otherwise do nothing"() {
+    def "if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> parsed = Try.of({ parse.apply("2") })
@@ -134,8 +134,8 @@ class Workshop extends Specification {
         def successCounter = 0
 
         when:
-        Try<Integer> squared = parsed // increment here
-        Try<Integer> fail = notParsed // increment here
+        Try<Integer> squared = parsed // increment here, hint: andThen
+        Try<Integer> fail = notParsed // increment here, hint: andThen
 
         then:
         squared.success
@@ -160,8 +160,8 @@ class Workshop extends Specification {
                 .partial({ true })
 
         when:
-        Try<Integer> dived = zero // map here using div
-        Try<Integer> summed = two // map here using add
+        Try<Integer> dived = zero // map here using div, hint: collect
+        Try<Integer> summed = two // map here using add, hint: collect
 
         then:
         summed.success
@@ -178,8 +178,8 @@ class Workshop extends Specification {
         Try<Integer> two = Try.of({ 2 })
 
         when:
-        Try<Integer> filteredThree = three // filter here using moreThanTwo
-        Try<Integer> filteredTwo = two // filter here using moreThanTwo
+        Try<Integer> filteredThree = three // filter here using moreThanTwo, hint: filter
+        Try<Integer> filteredTwo = two // filter here using moreThanTwo, hint: filter
 
         then:
         filteredThree.success
@@ -195,8 +195,8 @@ class Workshop extends Specification {
         Try<Person> kid = Try.of({ new Person(10) })
 
         when:
-        Try<Person> filteredAdult = adult  // filter here using NotAnAdultException
-        Try<Person> filteredKid = kid  // filter here using NotAnAdultException
+        Try<Person> filteredAdult = adult  // filter here using NotAnAdultException, hint: filter
+        Try<Person> filteredKid = kid  // filter here using NotAnAdultException, hint: filter
 
         then:
         filteredAdult.success
@@ -213,8 +213,8 @@ class Workshop extends Specification {
         def databaseConnectionProblem = 2
 
         when:
-        DatabaseRepository.findById(existingId) // handle side effect here
-        DatabaseRepository.findById(databaseConnectionProblem) // handle side effect here
+        DatabaseRepository.findById(existingId) // handle side effect here, hint: onSuccess
+        DatabaseRepository.findById(databaseConnectionProblem) // handle side effect here, hint: onFailure
 
         then:
         successCounter == 1
@@ -246,8 +246,8 @@ class Workshop extends Specification {
         def realId = 1
 
         when:
-        Try<String> byIdSuccess = DatabaseRepository.findById(realId) // recover here with defaultResponse
-        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // recover here with defaultResponse
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId) // recover here with defaultResponse, hint: recover
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // recover here with defaultResponse, hint: recover
 
         then:
         byIdSuccess.success
