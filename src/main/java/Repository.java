@@ -36,14 +36,14 @@ class BackupRepository {
     }
 }
 
-class DatabaseUserCannotBeFound extends Exception {
+class DatabaseUserCannotBeFound extends RuntimeException {
 
 }
 
-class BackupRepositoryConnectionProblem extends Exception {
+class BackupRepositoryConnectionProblem extends RuntimeException {
 
 }
 
-class DatabaseConnectionProblem extends Exception {
+class DatabaseConnectionProblem extends RuntimeException {
 
 }

@@ -1,3 +1,4 @@
+import io.vavr.CheckedConsumer
 import io.vavr.Function1
 import io.vavr.PartialFunction
 import io.vavr.collection.List
@@ -196,8 +197,8 @@ class Answers extends Specification {
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
-        def adult = new Person(20)
-        def kid = new Person(10)
+        def adult = Person.builder().age(20).build()
+        def kid = Person.builder().age(10).build()
         Try<Person> adultTry = Try.of({ adult })
         Try<Person> kidTry = Try.of({ kid })
 
@@ -261,7 +262,9 @@ class Answers extends Specification {
 
         when:
         Try<String> byIdSuccess = DatabaseRepository.findById(realId)
-                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function) // recover with other database
+                .recover(DatabaseConnectionProblem.class, {
+            defaultResponse
+        } as Function) // recover with other database
         Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
                 .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
 
@@ -292,11 +295,46 @@ class Answers extends Specification {
         concat.cause.message == 'NonExistingFile.txt'
     }
 
+    def "get person from database, change age and then try to save"() {
+        given:
+        def canBeSavedId = 1
+        def userModifiedId = 2
+        def connectionProblemId = 3
+        def fakeId = 4
+
+        when:
+        Try<Person> tried1 = PersonRepository.findById(canBeSavedId)
+                .map({ it.withAge(1) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried2 = PersonRepository.findById(userModifiedId)
+                .map({ it.withAge(2) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried3 = PersonRepository.findById(connectionProblemId)
+                .map({ it.withAge(3) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried4 = PersonRepository.findById(fakeId)
+                .map({ it.withAge(4) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+
+        then:
+        tried1.success
+        and:
+        tried2.failure
+        tried2.cause.class == PersonModifiedInMeantimeException
+        and:
+        tried3.failure
+        tried3.cause.class == DatabaseConnectionProblem
+        and:
+        tried4.failure
+        tried4.cause.class == EntityNotFoundException
+    }
+
     /**
      * to do:
      * recover: recover(ex1).recover(ex2)
-     * andThenTry: save to database
-     * map vs mapTry - parsing numbers from request
      * flatMap - carEngine
      * mapFailure - 3rd party library integration with domain exceptions
      * toEither

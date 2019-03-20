@@ -190,8 +190,8 @@ class Workshop extends Specification {
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
-        def adult = new Person(20)
-        def kid = new Person(10)
+        def adult = Person.builder().age(20).build()
+        def kid = Person.builder().age(10).build()
         Try<Person> adultTry = Try.of({ adult })
         Try<Person> kidTry = Try.of({ kid })
 
