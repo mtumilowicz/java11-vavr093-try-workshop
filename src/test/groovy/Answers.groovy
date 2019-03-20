@@ -40,6 +40,24 @@ class Answers extends Specification {
         fail.cause.message == 'wrong status'
     }
 
+    def "conversion: option -> try"() {
+        given:
+        Option<Integer> emptyOption = Option.none()
+        Option<Integer> notEmptyOption = Option.some(1)
+
+        when:
+        Try<Integer> failTry = emptyOption.toTry()
+        Try<Integer> successTry = notEmptyOption.toTry()
+
+        then:
+        failTry.failure
+        failTry.cause.class == NoSuchElementException
+
+        and:
+        successTry.success
+        successTry.get() == 1
+    }
+
     def "convert Try to Option"() {
         given:
         Try<Integer> success = Try.of({ 1 })
