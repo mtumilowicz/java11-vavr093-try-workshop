@@ -7,42 +7,42 @@ import spock.lang.Specification
 import java.nio.file.NoSuchFileException
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate 
+import java.util.function.Predicate
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
 class Workshop extends Specification {
 
-    def "create successful Try with value 1"() {
+    def "create successful Try with value 1, verify success and value"() {
         given:
-        Try<Integer> successful = false // create here, hint: success
+        Try<Integer> success = false // create here, hint: success
 
         expect:
-        successful.success
-        successful.get() == 1
+        false // verify success here, hint: isSuccess
+        false // verify value here, hint: get
     }
 
-    def "create failed Try with cause IllegalStateException with message: 'wrong status' "() {
+    def "create failed Try with cause IllegalStateException with message: 'wrong status', verify failure, cause and message"() {
         given:
-        Try<Integer> failure = false // create here, hint: failure
+        Try<Integer> fail = false // create here, hint: failure
 
         expect:
-        failure.failure
-        failure.cause.class == IllegalStateException
-        failure.cause.message == 'wrong status'
+        false // verify failure here, hint: isFailure
+        false // verify cause class here, hint: getCause, class
+        false // verify cause message here, hint: getCause, getMessage
     }
 
     def "convert Try to Option"() {
         given:
         Try<Integer> success = Try.of({ 1 })
         Try<Integer> failure = Try.failure(new IllegalStateException())
-        
+
         when:
         Option<Integer> successOption = success // convert here, hint: toOption()
         Option<Integer> failureOption = failure // convert here, hint: toOption()
-        
+
         then:
-        successOption.defined
         successOption == Option.some(1)
         failureOption.empty
     }
@@ -52,11 +52,11 @@ class Workshop extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> tried = Try.of({ -1 }) // wrap here
+        Try<Integer> success = Try.of({ -1 }) // wrap here
 
         then:
-        false // verify success here, hint: isSuccess()
-        false // verify output here, hint: get()
+        false // verify success here, hint: isSuccess
+        false // verify value here, hint: get
     }
 
     def "wrap div (4 / 0) with try and verify failure and cause"() {
@@ -64,12 +64,11 @@ class Workshop extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> tried = Try.of({ -1 }) // wrap here
+        Try<Integer> fail = Try.of({ -1 }) // wrap here
 
         then:
         false // verify failure here, hint: isFailure()
         false // verify failure class here, hint: getCause(), .class
-        false // verify failure message here, hint: getCause(), getMessage()
     }
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
@@ -81,11 +80,9 @@ class Workshop extends Specification {
         Try<Integer> notParsed = Try.of({ -1 }) // wrap here, hint: parse.apply('a')
 
         then:
-        false // verify success here, hint: isSuccess()
-        false // verify output here, hint: get()
+        false // verify success here
         false // verify failure here, hint: isFailure()
         false // verify failure class here, hint: getCause(), .class
-        false // verify failure message here, hint: getCause(), getMessage()
     }
 
     def "sum all values of try sequence or return the first failure"() {
@@ -99,13 +96,13 @@ class Workshop extends Specification {
 
         when:
         Try<Integer> sum = Try.of({ -1 }) // sum here, hint: sequence, map
-        Try<Integer> withFailure = Try.of({ -1 }) // sum here, hint: sequence, map
+        Try<Integer> fail = Try.of({ -1 }) // sum here, hint: sequence, map
 
         then:
-        sum.get() == 10
-        withFailure.failure
-        withFailure.cause.class == NumberFormatException
-        withFailure.cause.message == 'For input string: "a"'
+        sum == Try.of({ 10 })
+        fail.failure
+        fail.cause.class == NumberFormatException
+        fail.cause.message == 'For input string: "a"'
     }
 
     def "square parsed number, or do nothing"() {
@@ -121,6 +118,7 @@ class Workshop extends Specification {
         then:
         squared.success
         squared.get() == 4
+        and:
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
@@ -138,8 +136,7 @@ class Workshop extends Specification {
         Try<Integer> fail = notParsed // increment here, hint: andThen
 
         then:
-        squared.success
-        squared.get() == 2
+        squared == Try.of({ 2 })
         successCounter == 1
         and:
         fail.failure
@@ -166,6 +163,7 @@ class Workshop extends Specification {
         then:
         summed.success
         summed.get() == 7
+        and:
         dived.failure
         dived.cause.class == NoSuchElementException
         dived.cause.message == 'Predicate does not hold for 0'
@@ -184,6 +182,7 @@ class Workshop extends Specification {
         then:
         filteredThree.success
         filteredThree.get() == 3
+        and:
         filteredTwo.failure
         filteredTwo.cause.class == NoSuchElementException
         filteredTwo.cause.message == 'Predicate does not hold for 2'
@@ -191,15 +190,19 @@ class Workshop extends Specification {
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
-        Try<Person> adult = Try.of({ new Person(20) })
-        Try<Person> kid = Try.of({ new Person(10) })
+        def adult = new Person(20)
+        def kid = new Person(10)
+        Try<Person> adultTry = Try.of({ adult })
+        Try<Person> kidTry = Try.of({ kid })
 
         when:
-        Try<Person> filteredAdult = adult  // filter here using NotAnAdultException, hint: filter
-        Try<Person> filteredKid = kid  // filter here using NotAnAdultException, hint: filter
+        Try<Person> filteredAdult = adultTry  // filter here using NotAnAdultException, hint: filter
+        Try<Person> filteredKid = kidTry  // filter here using NotAnAdultException, hint: filter
 
         then:
         filteredAdult.success
+        filteredAdult.get() == adult
+        and:
         filteredKid.failure
         filteredKid.cause.class == NotAnAdultException
     }
@@ -232,8 +235,12 @@ class Workshop extends Specification {
         Try<String> backupConnectionProblem = Repository.findById(backupConnectionProblemId)
 
         then:
-        fromDatabase == Try.of({ 'from database' })
-        fromCache == Try.of({ 'from cache' })
+        fromDatabase.success
+        fromDatabase.get() == 'from database'
+        and:
+        fromCache.success
+        fromCache.get() == 'from cache'
+        and:
         backupConnectionProblem.failure
         backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
     }
@@ -251,6 +258,7 @@ class Workshop extends Specification {
         then:
         byIdSuccess.success
         byIdSuccess.get() == 'found-by-id'
+        and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
     }
