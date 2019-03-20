@@ -17,7 +17,7 @@ class Workshop extends Specification {
 
     def "create successful try with value 1"() {
         given:
-        def successful = false // create here
+        Try<Integer> successful = false // create here
 
         expect:
         successful.success
@@ -26,7 +26,7 @@ class Workshop extends Specification {
 
     def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
         given:
-        def successful = false // create here
+        Try<Integer> successful = false // create here
 
         expect:
         successful.failure
@@ -36,12 +36,12 @@ class Workshop extends Specification {
 
     def "convert Try to Option"() {
         given:
-        def success = Try.of({ 1 })
-        def failure = Try.failure(new IllegalStateException())
+        Try<Integer> success = Try.of({ 1 })
+        Try<Integer> failure = Try.failure(new IllegalStateException())
         
         when:
-        def successOption = success // convert here, hint: toOption()
-        def failureOption = failure // convert here, hint: toOption()
+        Option<Integer> successOption = success // convert here, hint: toOption()
+        Option<Integer> failureOption = failure // convert here, hint: toOption()
         
         then:
         successOption.defined
@@ -54,7 +54,7 @@ class Workshop extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        def tried = Try.of({ -1 }) // wrap here
+        Try<Integer> tried = Try.of({ -1 }) // wrap here
 
         then:
         false // verify success here
@@ -66,7 +66,7 @@ class Workshop extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        def tried = Try.of({ -1 }) // wrap here
+        Try<Integer> tried = Try.of({ -1 }) // wrap here
 
         then:
         false // verify failure here
@@ -79,8 +79,8 @@ class Workshop extends Specification {
         Function<String, Integer> parse = { Integer.parseInt(it) }
 
         when:
-        def parsed = Try.of({ -1 })
-        def notParsed = Try.of({ -1 })
+        Try<Integer> parsed = Try.of({ -1 })
+        Try<Integer> notParsed = Try.of({ -1 })
 
         then:
         false // verify success here
@@ -93,15 +93,15 @@ class Workshop extends Specification {
     def "sum all values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        def parsed1 = Try.of({ parse.apply("1") })
-        def parsed2 = Try.of({ parse.apply("2") })
-        def parsed3 = Try.of({ parse.apply("3") })
-        def parsed4 = Try.of({ parse.apply("4") })
-        def failure = Try.of({ parse.apply("a") })
+        Try<Integer> parsed1 = Try.of({ parse.apply("1") })
+        Try<Integer> parsed2 = Try.of({ parse.apply("2") })
+        Try<Integer> parsed3 = Try.of({ parse.apply("3") })
+        Try<Integer> parsed4 = Try.of({ parse.apply("4") })
+        Try<Integer> failure = Try.of({ parse.apply("a") })
 
         when:
-        def sum = Try.of({ -1 }) // sum parsed1,...,parsed4
-        def withFailure = Try.of({ -1 }) // sum parsed1,...,parsed4,failure
+        Try<Integer> sum = Try.of({ -1 }) // sum parsed1,...,parsed4
+        Try<Integer> withFailure = Try.of({ -1 }) // sum parsed1,...,parsed4,failure
 
         then:
         sum.get() == 10
@@ -113,12 +113,12 @@ class Workshop extends Specification {
     def "square parsed number, or do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        def parsed = Try.of({ parse.apply("2") })
-        def notParsed = Try.of({ parse.apply("a") })
+        Try<Integer> parsed = Try.of({ parse.apply("2") })
+        Try<Integer> notParsed = Try.of({ parse.apply("a") })
 
         when:
-        def squared = parsed // square
-        def fail = notParsed // square
+        Try<Integer> squared = parsed // square
+        Try<Integer> fail = notParsed // square
 
         then:
         squared.success
@@ -131,13 +131,13 @@ class Workshop extends Specification {
     def "if success increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        def parsed = Try.of({ parse.apply("2") })
-        def notParsed = Try.of({ parse.apply("a") })
+        Try<Integer> parsed = Try.of({ parse.apply("2") })
+        Try<Integer> notParsed = Try.of({ parse.apply("a") })
         def successCounter = new AtomicInteger()
 
         when:
-        def squared = parsed // increment here
-        def fail = notParsed // increment here
+        Try<Integer> squared = parsed // increment here
+        Try<Integer> fail = notParsed // increment here
 
         then:
         squared.success
@@ -152,8 +152,8 @@ class Workshop extends Specification {
     def "map value with a partial function; if not defined -> NoSuchElementException"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        def zero = Try.of({ parse.apply("0") })
-        def two = Try.of({ parse.apply("2") })
+        Try<Integer> zero = Try.of({ parse.apply("0") })
+        Try<Integer> two = Try.of({ parse.apply("2") })
 
         and:
         PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
@@ -162,8 +162,8 @@ class Workshop extends Specification {
                 .partial({ true })
 
         when:
-        def dived = zero // map here using div
-        def summed = two // map here using add
+        Try<Integer> dived = zero // map here using div
+        Try<Integer> summed = two // map here using add
 
         then:
         summed.success
@@ -176,12 +176,12 @@ class Workshop extends Specification {
     def "if value > 2 do nothing, otherwise failure"() {
         given:
         Predicate<Integer> moreThanTwo = { it > 2 }
-        def three = Try.of({ 3 })
-        def two = Try.of({ 2 })
+        Try<Integer> three = Try.of({ 3 })
+        Try<Integer> two = Try.of({ 2 })
 
         when:
-        def filteredThree = three // filter here using moreThanTwo
-        def filteredTwo = two // filter here using moreThanTwo
+        Try<Integer> filteredThree = three // filter here using moreThanTwo
+        Try<Integer> filteredTwo = two // filter here using moreThanTwo
 
         then:
         filteredThree.success
@@ -193,12 +193,12 @@ class Workshop extends Specification {
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
-        def adult = Try.of({ new Person(20) })
-        def kid = Try.of({ new Person(10) })
+        Try<Person> adult = Try.of({ new Person(20) })
+        Try<Person> kid = Try.of({ new Person(10) })
 
         when:
-        def filteredAdult = adult  // filter here using NotAnAdultException
-        def filteredKid = kid  // filter here using NotAnAdultException
+        Try<Person> filteredAdult = adult  // filter here using NotAnAdultException
+        Try<Person> filteredKid = kid  // filter here using NotAnAdultException
 
         then:
         filteredAdult.success
@@ -230,9 +230,9 @@ class Workshop extends Specification {
         def backupConnectionProblemId = 3
 
         when:
-        def fromDatabase = Repository.findById(fromDatabaseId)
-        def fromCache = Repository.findById(fromCacheId)
-        def backupConnectionProblem = Repository.findById(backupConnectionProblemId)
+        Try<String> fromDatabase = Repository.findById(fromDatabaseId)
+        Try<String> fromCache = Repository.findById(fromCacheId)
+        Try<String> backupConnectionProblem = Repository.findById(backupConnectionProblemId)
 
         then:
         fromDatabase == Try.of({ "from database" })
@@ -248,8 +248,8 @@ class Workshop extends Specification {
         def realId = 1
 
         when:
-        def byIdSuccess = DatabaseRepository.findById(realId) // recover here with defaultResponse
-        def byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // recover here with defaultResponse
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId) // recover here with defaultResponse
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // recover here with defaultResponse
 
         then:
         byIdSuccess.success
@@ -260,7 +260,7 @@ class Workshop extends Specification {
 
     def "vavr try with resources: success"() {
         when:
-        def concat = TWR.usingVavr("src/test/resources/lines.txt")
+        Try<String> concat = TWR.usingVavr("src/test/resources/lines.txt")
 
         then:
         concat.success
@@ -269,7 +269,7 @@ class Workshop extends Specification {
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        def concat = TWR.usingVavr("NonExistingFile.txt")
+        Try<String> concat = TWR.usingVavr("NonExistingFile.txt")
 
         then:
         concat.failure

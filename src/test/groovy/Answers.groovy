@@ -268,7 +268,7 @@ class Answers extends Specification {
 
     def "vavr try with resources: success"() {
         when:
-        def concat = TWRAnswer.usingVavr("src/test/resources/lines.txt")
+        Try<String> concat = TWRAnswer.usingVavr("src/test/resources/lines.txt")
 
         then:
         concat.success
@@ -277,7 +277,7 @@ class Answers extends Specification {
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        def concat = TWRAnswer.usingVavr("NonExistingFile.txt")
+        Try<String> concat = TWRAnswer.usingVavr("NonExistingFile.txt")
 
         then:
         concat.failure
