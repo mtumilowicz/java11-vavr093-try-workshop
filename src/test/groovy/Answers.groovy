@@ -71,7 +71,6 @@ class Answers extends Specification {
         then:
         fail.failure
         fail.cause.class == ArithmeticException
-        fail.cause.message == 'Division by zero'
     }
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
@@ -87,7 +86,6 @@ class Answers extends Specification {
         parsed.get() == 1
         notParsed.failure
         notParsed.cause.class == NumberFormatException
-        notParsed.cause.message == 'For input string: "a"'
     }
 
     def "sum all values of try sequence or return the first failure"() {
@@ -126,9 +124,9 @@ class Answers extends Specification {
         then:
         squared.success
         squared.get() == 4
+        and:
         fail.failure
         fail.cause.class == NumberFormatException
-        fail.cause.message == 'For input string: "a"'
     }
 
     def "if success - increment counter, otherwise do nothing"() {
@@ -263,7 +261,7 @@ class Answers extends Specification {
 
         when:
         Try<String> byIdSuccess = DatabaseRepository.findById(realId)
-                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
+                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function) // recover with other database
         Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
                 .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
 
