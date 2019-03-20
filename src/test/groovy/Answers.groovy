@@ -334,7 +334,7 @@ class Answers extends Specification {
 
     /**
      * to do:
-     * recover: recover(ex1).recover(ex2)
+     * recover: recoverWith(EntityNotFound, database).recover(CacheSynchronization, default-response)
      * flatMap - carEngine
      * mapFailure - 3rd party library integration with domain exceptions
      * toEither
