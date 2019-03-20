@@ -232,16 +232,16 @@ class Answers extends Specification {
         failureCounter == 1
     }
 
-    def "try to find in database then try to find in backup"() {
+    def "try to find in cache, then try to find in database"() {
         given:
-        def fromDatabaseId = 1
-        def fromCacheId = 2
-        def backupConnectionProblemId = 3
+        def fromDatabaseId = 4
+        def fromCacheId = 20
+        def databaseConnectionId = 2
 
         when:
         Try<String> fromDatabase = RepositoryAnswer.findById(fromDatabaseId)
         Try<String> fromCache = RepositoryAnswer.findById(fromCacheId)
-        Try<String> backupConnectionProblem = RepositoryAnswer.findById(backupConnectionProblemId)
+        Try<String> backupConnectionProblem = RepositoryAnswer.findById(databaseConnectionId)
 
         then:
         fromDatabase.success
@@ -251,7 +251,7 @@ class Answers extends Specification {
         fromCache.get() == 'from cache'
         and:
         backupConnectionProblem.failure
-        backupConnectionProblem.cause.class == CacheUserCannotBeFound
+        backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
     def "if database connection error, recover with default response"() {
@@ -331,10 +331,23 @@ class Answers extends Specification {
         tried4.failure
         tried4.cause.class == EntityNotFoundException
     }
+    
+    def "if entity cannot be found in cache try to find in database; if cache is under synchronization with database - return default response"() {
+        given:
+        def userFromCache = 1
+        def databaseConnection = 2
+        def userFromDatabase = 4
+        def cacheSynchronization = 5
+        
+        expect:
+        Repository.findByIdRecovered(userFromCache).get() == 'from cache'
+        Repository.findByIdRecovered(userFromDatabase).get() == 'from database'
+        Repository.findByIdRecovered(cacheSynchronization).get() == 'cache synchronization with database, try again later'
+        Repository.findByIdRecovered(databaseConnection).get() == 'cannot connect to database'
+    }
 
     /**
      * to do:
-     * recover: recoverWith(EntityNotFound, database).recover(CacheSynchronization, default-response)
      * flatMap - carEngine
      * mapFailure - 3rd party library integration with domain exceptions
      * toEither

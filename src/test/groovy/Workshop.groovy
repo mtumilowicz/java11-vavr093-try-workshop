@@ -223,7 +223,7 @@ class Workshop extends Specification {
         failureCounter == 1
     }
 
-    def "try to find in database then try to find in backup"() {
+    def "try to find in cache, then try to find in database"() {
         given:
         def fromDatabaseId = 1
         def fromCacheId = 2
