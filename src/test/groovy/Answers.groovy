@@ -9,44 +9,44 @@ import java.nio.file.NoSuchFileException
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.function.Supplier 
+import java.util.function.Supplier
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
 class Answers extends Specification {
 
-    def "create successful try with value 1"() {
+    def "create successful Try with value 1, verify success and value"() {
         given:
-        Try<Integer> successful = Try.success(1)
+        Try<Integer> success = Try.success(1)
 
         expect:
-        successful.success
-        successful.get() == 1
+        success.success
+        success.get() == 1
     }
 
-    def "create failure try with cause IllegalStateException with message: 'wrong status' "() {
+    def "create failed Try with cause IllegalStateException with message: 'wrong status', verify failure, cause and message"() {
         given:
-        Try<Integer> failure = Try.failure(new IllegalStateException('wrong status'))
+        Try<Integer> fail = Try.failure(new IllegalStateException('wrong status'))
 
         expect:
-        failure.failure
-        failure.cause.class == IllegalStateException
-        failure.cause.message == 'wrong status'
+        fail.failure
+        fail.cause.class == IllegalStateException
+        fail.cause.message == 'wrong status'
     }
 
     def "convert Try to Option"() {
         given:
         Try<Integer> success = Try.of({ 1 })
-        Try<Integer> failure = Try.failure(new IllegalStateException())
+        Try<Integer> fail = Try.failure(new IllegalStateException())
 
         when:
         Option<Integer> successOption = success.toOption()
-        Option<Integer> failureOption = failure.toOption()
+        Option<Integer> failOption = fail.toOption()
 
         then:
-        successOption.defined
         successOption == Option.some(1)
-        failureOption.empty
+        failOption == Option.none()
     }
 
     def "wrap div (4 / 2) with try and verify success and output"() {
@@ -54,11 +54,11 @@ class Answers extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> tried = Try.of({ div.apply(4, 2) }) // wrap here
+        Try<Integer> dived = Try.of({ div.apply(4, 2) }) // wrap here
 
         then:
-        tried.success
-        tried.get() == 2
+        dived.success
+        dived.get() == 2
     }
 
     def "wrap div (4 / 0) with try and verify failure and cause"() {
@@ -66,12 +66,12 @@ class Answers extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> tried = Try.of({ div.apply(4, 0) })
+        Try<Integer> fail = Try.of({ div.apply(4, 0) })
 
         then:
-        tried.failure
-        tried.cause.class == ArithmeticException
-        tried.cause.message == 'Division by zero'
+        fail.failure
+        fail.cause.class == ArithmeticException
+        fail.cause.message == 'Division by zero'
     }
 
     def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
@@ -102,14 +102,15 @@ class Answers extends Specification {
         when:
         Try<Number> sum = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4))
                 .map({ it.sum() })
-        Try<Number> withFailure = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4, failure))
+        Try<Number> fail = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4, failure))
                 .map({ it.sum() })
 
         then:
+        sum.success
         sum.get() == 10
-        withFailure.failure
-        withFailure.cause.class == NumberFormatException
-        withFailure.cause.message == 'For input string: "a"'
+        fail.failure
+        fail.cause.class == NumberFormatException
+        fail.cause.message == 'For input string: "a"'
     }
 
     def "square parsed number, or do nothing"() {
@@ -156,7 +157,7 @@ class Answers extends Specification {
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> zero = Try.of({ parse.apply('0') })
         Try<Integer> two = Try.of({ parse.apply('2') })
-        
+
         and:
         PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
                 .partial({ it != 0 })
@@ -170,6 +171,7 @@ class Answers extends Specification {
         then:
         summed.success
         summed.get() == 7
+        and:
         dived.failure
         dived.cause.class == NoSuchElementException
         dived.cause.message == 'Predicate does not hold for 0'
@@ -188,6 +190,7 @@ class Answers extends Specification {
         then:
         filteredThree.success
         filteredThree.get() == 3
+        and:
         filteredTwo.failure
         filteredTwo.cause.class == NoSuchElementException
         filteredTwo.cause.message == 'Predicate does not hold for 2'
@@ -195,15 +198,19 @@ class Answers extends Specification {
 
     def "if person.isAdult do nothing, otherwise failure with customized error - NotAnAdultException"() {
         given:
-        Try<Person> adult = Try.of({ new Person(20) })
-        Try<Person> kid = Try.of({ new Person(10) })
+        def adult = new Person(20)
+        def kid = new Person(10)
+        Try<Person> adultTry = Try.of({ adult })
+        Try<Person> kidTry = Try.of({ kid })
 
         when:
-        Try<Person> filteredAdult = adult.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
-        Try<Person> filteredKid = kid.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
+        Try<Person> filteredAdult = adultTry.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
+        Try<Person> filteredKid = kidTry.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
 
         then:
         filteredAdult.success
+        filteredAdult.get() == adult
+        and:
         filteredKid.failure
         filteredKid.cause.class == NotAnAdultException
     }
@@ -238,8 +245,12 @@ class Answers extends Specification {
         Try<String> backupConnectionProblem = RepositoryAnswer.findById(backupConnectionProblemId)
 
         then:
-        fromDatabase == Try.of({ 'from database' })
-        fromCache == Try.of({ 'from cache' })
+        fromDatabase.success
+        fromDatabase.get() == 'from database'
+        and:
+        fromCache.success
+        fromCache.get() == 'from cache'
+        and:
         backupConnectionProblem.failure
         backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
     }
@@ -259,6 +270,7 @@ class Answers extends Specification {
         then:
         byIdSuccess.success
         byIdSuccess.get() == 'from database'
+        and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
     }
