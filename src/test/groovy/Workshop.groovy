@@ -242,7 +242,7 @@ class Workshop extends Specification {
         fromCache.get() == 'from cache'
         and:
         backupConnectionProblem.failure
-        backupConnectionProblem.cause.class == BackupRepositoryConnectionProblem
+        backupConnectionProblem.cause.class == CacheUserCannotBeFound
     }
 
     def "if database connection error, recover with default response"() {

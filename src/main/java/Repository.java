@@ -13,6 +13,16 @@ class Repository {
         return null;
     }
 }
+
+class CacheRepository {
+    static Try<String> findById(int id) {
+        if (id == 3) {
+            return Try.failure(new CacheUserCannotBeFound());
+        }
+        return Try.of(() -> "from cache");
+    }
+}
+
 class DatabaseRepository {
     static Try<String> findById(int id) {
         switch (id) {
@@ -27,20 +37,11 @@ class DatabaseRepository {
 
 }
 
-class BackupRepository {
-    static Try<String> findById(int id) {
-        if (id == 3) {
-            return Try.failure(new BackupRepositoryConnectionProblem());
-        }
-        return Try.of(() -> "from cache");
-    }
-}
-
 class DatabaseUserCannotBeFound extends RuntimeException {
 
 }
 
-class BackupRepositoryConnectionProblem extends RuntimeException {
+class CacheUserCannotBeFound extends RuntimeException {
 
 }
 

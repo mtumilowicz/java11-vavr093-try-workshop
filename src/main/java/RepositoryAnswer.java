@@ -5,6 +5,6 @@ import io.vavr.control.Try;
  */
 class RepositoryAnswer {
     static Try<String> findById(int id) {
-        return DatabaseRepository.findById(id).orElse(() -> BackupRepository.findById(id));
+        return DatabaseRepository.findById(id).orElse(() -> CacheRepository.findById(id));
     }
 }
