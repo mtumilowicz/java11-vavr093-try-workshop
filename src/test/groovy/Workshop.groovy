@@ -89,7 +89,7 @@ class Workshop extends Specification {
         false // verify failure class here, hint: getCause(), .class
     }
 
-    def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
+    def "wrap parseInt with try, and invoke it on 1 and 'a', then verify success and failure"() {
         given:
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
@@ -113,8 +113,8 @@ class Workshop extends Specification {
         Try<Integer> failure = Try.of({ parse.apply('a') })
 
         when:
-        Try<Integer> sum = Try.of({ -1 }) // sum here, hint: sequence, map
-        Try<Integer> fail = Try.of({ -1 }) // sum here, hint: sequence, map
+        Try<Integer> sum = Try.of({ -1 }) // sum here parsed1,...,parsed4; hint: sequence, map
+        Try<Integer> fail = Try.of({ -1 }) // sum here parsed1,...,parsed4, failure, hint: sequence, map
 
         then:
         sum == Try.of({ 10 })
@@ -123,11 +123,13 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "square parsed number, or do nothing"() {
+    def "parse number, if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply('2') })
-        Try<Integer> notParsed = Try.of({ parse.apply('a') })
+        def number = '2'
+        def letter = 'a'
+        Try<Integer> parsed = Try.of({ -1 }) // try to parse number here
+        Try<Integer> notParsed = Try.of({ -1 }) // try to parse letter here
 
         when:
         Try<Integer> squared = parsed // square here, hint: map
@@ -142,19 +144,20 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "if success - increment counter, otherwise do nothing"() {
+    def "try to parse a number, if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply('2') })
-        Try<Integer> notParsed = Try.of({ parse.apply('a') })
+        def number = '2'
+        def letter = 'a'
         def successCounter = 0
 
         when:
-        Try<Integer> squared = parsed // increment here, hint: andThen
-        Try<Integer> fail = notParsed // increment here, hint: andThen
+        Try<Integer> squared = parsed // try to parse number and increment here, hint: andThen
+        Try<Integer> fail = notParsed // try to parse letter and increment here, hint: andThen
 
         then:
-        squared == Try.of({ 2 })
+        squared.success
+        squared.get() == 2
         successCounter == 1
         and:
         fail.failure

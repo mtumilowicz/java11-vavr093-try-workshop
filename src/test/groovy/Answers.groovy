@@ -96,7 +96,7 @@ class Answers extends Specification {
         fail.cause.class == ArithmeticException
     }
 
-    def "wrap parseInt with try, and invoke it on 1 and a, then verify success and failure"() {
+    def "wrap parseInt with try, and invoke it on 1 and 'a', then verify success and failure"() {
         given:
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
@@ -134,11 +134,13 @@ class Answers extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "square parsed number, or do nothing"() {
+    def "parse number, if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply('2') })
-        Try<Integer> notParsed = Try.of({ parse.apply('a') })
+        def number = '2'
+        def letter = 'a'
+        Try<Integer> parsed = Try.of({ parse.apply(number) })
+        Try<Integer> notParsed = Try.of({ parse.apply(letter) })
 
         when:
         Try<Integer> squared = parsed.map({ it * it })
@@ -152,16 +154,16 @@ class Answers extends Specification {
         fail.cause.class == NumberFormatException
     }
 
-    def "if success - increment counter, otherwise do nothing"() {
+    def "try to parse a number, if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed = Try.of({ parse.apply('2') })
-        Try<Integer> notParsed = Try.of({ parse.apply('a') })
+        def number = '2'
+        def letter = 'a'
         def successCounter = 0
 
         when:
-        Try<Integer> squared = parsed.andThen({ successCounter++ })
-        Try<Integer> fail = notParsed.andThen({ successCounter++ })
+        Try<Integer> squared = Try.of({ parse.apply(number) }).andThen({ successCounter++ })
+        Try<Integer> fail = Try.of({ parse.apply(letter) }).andThen({ successCounter++ })
 
         then:
         squared.success
@@ -375,13 +377,13 @@ class Answers extends Specification {
         findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
-    
+
     def "map exceptions"() {
         given:
 
         expect:
-        Try.of({Integer.parseInt("a")}).mapFailure(
-                Case($(instanceOf(NumberFormatException.class)), {new CannotParseInteger(it.message)} as Function)
+        Try.of({ Integer.parseInt("a") }).mapFailure(
+                Case($(instanceOf(NumberFormatException.class)), { new CannotParseInteger(it.message) } as Function)
         ).cause.class == CannotParseInteger // transform to function
     }
 
