@@ -350,11 +350,36 @@ class Answers extends Specification {
         def personWithIncome = 2
 
         when:
-        def withIncome = PersonRepository.findById(personWithIncome)
-                .map({ estimateIncome.apply(it) })        
-        def withoutIncome = PersonRepository.findById(personWithoutIncome)
+        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
+                .map({ estimateIncome.apply(it) })
+        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
                 .map({ estimateIncome.apply(it) })
         
+        then:
+        withIncome.success
+        withoutIncome.failure
+    }
+
+    def "get person from database, and then try to estimate income with flatMap"() {
+        given:
+        Function<Person, Try<Integer>> estimateIncome = {
+            switch (it.id) {
+                case 1:
+                    return Try.failure(new RuntimeException())
+                default:
+                    return Try.success(20)
+            }
+        }
+        and:
+        def personWithoutIncome = 1
+        def personWithIncome = 2
+
+        when:
+        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
+                .flatMap({ estimateIncome.apply(it) })
+        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
+                .flatMap({ estimateIncome.apply(it) })
+
         then:
         withIncome.success
         withoutIncome.failure
@@ -427,12 +452,7 @@ class Answers extends Specification {
                 Case($(instanceOf(NumberFormatException.class)), { new CannotParseInteger(it.message) } as Function)
         ).cause.class == CannotParseInteger // transform to function
     }
-
-    /**
-     * to do:
-     * flatMap - carEngine
-     * toEither
-     */
+    
     class CannotParseInteger extends RuntimeException {
         CannotParseInteger(String message) {
             super(message)
