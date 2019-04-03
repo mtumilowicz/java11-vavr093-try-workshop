@@ -318,6 +318,31 @@ class Answers extends Specification {
         concat.cause.class == NoSuchFileException
         concat.cause.message == 'NonExistingFile.txt'
     }
+    
+    def "get person from database, and then try to estimate income"() {
+        given:
+        Function<Person, Integer> estimateIncome = { 
+            switch (it.id) {
+                case 1:
+                    throw new RuntimeException()
+                default:
+                    return 30
+            }
+        }
+        and:
+        def personWithoutIncome = 1
+        def personWithIncome = 2
+
+        when:
+        def withIncome = PersonRepository.findById(personWithIncome)
+                .map({ estimateIncome.apply(it) })        
+        def withoutIncome = PersonRepository.findById(personWithoutIncome)
+                .map({ estimateIncome.apply(it) })
+        
+        then:
+        withIncome.success
+        withoutIncome.failure
+    }
 
     def "get person from database, change age and then try to save"() {
         given:
