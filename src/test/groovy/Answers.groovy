@@ -128,7 +128,7 @@ class Answers extends Specification {
         notParsed.cause.class == NumberFormatException
     }
 
-    def "sum all values of try sequence or return the first failure"() {
+    def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> parsed1 = Try.of({ parse.apply('1') })
@@ -157,12 +157,12 @@ class Answers extends Specification {
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
         def letter = 'a'
-        Try<Integer> parsed = Try.of({ parse.apply(number) })
-        Try<Integer> notParsed = Try.of({ parse.apply(letter) })
 
         when:
-        Try<Integer> squared = parsed.map({ it * it })
-        Try<Integer> fail = notParsed.map({ it * it })
+        Try<Integer> squared = Try.of({ parse.apply(number) })
+                .map({ it * it })
+        Try<Integer> fail = Try.of({ parse.apply(letter) })
+                .map({ it * it })
 
         then:
         squared.success
@@ -222,7 +222,7 @@ class Answers extends Specification {
         withoutIncome.failure
     }
 
-    def "try to parse a number, if success perform side-effect - increment counter, otherwise do nothing"() {
+    def "performing side-effects: try to parse a number; if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -230,20 +230,32 @@ class Answers extends Specification {
         def successCounter = 0
 
         when:
-        Try<Integer> squared = Try.of({ parse.apply(number) }).andThen({ successCounter++ })
-        Try<Integer> fail = Try.of({ parse.apply(letter) }).andThen({ successCounter++ })
+        Try.of({ parse.apply(number) }).andThen({ successCounter++ })
+        Try.of({ parse.apply(letter) }).andThen({ successCounter++ })
 
         then:
-        squared.success
-        squared.get() == 2
         successCounter == 1
-        and:
-        fail.failure
-        fail.cause.class == NumberFormatException
-        fail.cause.message == 'For input string: "a"'
     }
 
-    def "get person from database, change age and then try to save"() {
+    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
+        given:
+        def failureCounter = 0
+        def successCounter = 0
+        def existingId = 1
+        def databaseConnectionProblem = 2
+
+        when:
+        DatabaseRepository.findById(existingId)
+                .onSuccess({ successCounter++ })
+        DatabaseRepository.findById(databaseConnectionProblem)
+                .onFailure({ failureCounter++ })
+
+        then:
+        successCounter == 1
+        failureCounter == 1
+    }
+
+    def "performing side-effects: get person from database, change age and then try to save"() {
         given:
         def canBeSavedId = 1
         def userModifiedId = 2
@@ -343,34 +355,19 @@ class Answers extends Specification {
         filteredKid.cause.class == NotAnAdultException
     }
 
-    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
-        given:
-        def failureCounter = 0
-        def successCounter = 0
-        def existingId = 1
-        def databaseConnectionProblem = 2
-
-        when:
-        DatabaseRepository.findById(existingId)
-                .onSuccess({ successCounter++ })
-        DatabaseRepository.findById(databaseConnectionProblem)
-                .onFailure({ failureCounter++ })
-
-        then:
-        successCounter == 1
-        failureCounter == 1
-    }
-
     def "try to find in cache, if not found - then try to find in database"() {
         given:
         def fromDatabaseId = 4
         def fromCacheId = 20
         def databaseConnectionProblemId = 2
+        Function<Integer, Try<String>> findById = {
+            id -> CacheRepository.findById(id).orElse({ DatabaseRepository.findById(id) })
+        }
 
         when:
-        Try<String> fromDatabase = RepositoryAnswer.findById(fromDatabaseId)
-        Try<String> fromCache = RepositoryAnswer.findById(fromCacheId)
-        Try<String> backupConnectionProblem = RepositoryAnswer.findById(databaseConnectionProblemId)
+        Try<String> fromDatabase = findById.apply(fromDatabaseId)
+        Try<String> fromCache = findById.apply(fromCacheId)
+        Try<String> backupConnectionProblem = findById.apply(databaseConnectionProblemId)
 
         then:
         fromDatabase.success
@@ -383,7 +380,7 @@ class Answers extends Specification {
         backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
-    def "if database connection error, recover with default response"() {
+    def "recovery: if database connection error, recover with default response"() {
         given:
         def defaultResponse = 'default response'
         def databaseConnectionError = 2
@@ -403,7 +400,7 @@ class Answers extends Specification {
         byIdRecovered.get() == defaultResponse
     }
 
-    def "if database connection error, recover with request to other (backup) database"() {
+    def "recovery: if database connection error, recover with request to other (backup) database"() {
         given:
         def databaseConnectionError = 2
         def realId = 1
@@ -420,25 +417,6 @@ class Answers extends Specification {
         and:
         byIdRecovered.success
         byIdRecovered.get() == 'from backup'
-    }
-
-    def "vavr try with resources: success"() {
-        when:
-        Try<String> concat = TWRAnswer.usingVavr('src/test/resources/lines.txt')
-
-        then:
-        concat.success
-        concat.get() == '1,2,3'
-    }
-
-    def "vavr try with resources: failure - file does not exists"() {
-        when:
-        Try<String> concat = TWRAnswer.usingVavr('404.txt')
-
-        then:
-        concat.failure
-        concat.cause.class == NoSuchFileException
-        concat.cause.message == '404.txt'
     }
 
     def "recovery: CacheSynchronization - default answer, CacheUserCannotBeFound - database request, DatabaseConnectionProblem - default response"() {
@@ -463,7 +441,26 @@ class Answers extends Specification {
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
 
-    def "pattern matching: map outer exceptions to domain exceptions with same message"() {
+    def "vavr try with resources: success"() {
+        when:
+        Try<String> concat = TWRAnswer.usingVavr('src/test/resources/lines.txt')
+
+        then:
+        concat.success
+        concat.get() == '1,2,3'
+    }
+
+    def "vavr try with resources: failure - file does not exists"() {
+        when:
+        Try<String> concat = TWRAnswer.usingVavr('404.txt')
+
+        then:
+        concat.failure
+        concat.cause.class == NoSuchFileException
+        concat.cause.message == '404.txt'
+    }
+
+    def "pattern matching: map third-party library exceptions to domain exceptions with same message"() {
         given:
         Try<Integer> fail = Try.of({ Integer.parseInt("a") })
 
@@ -475,11 +472,5 @@ class Answers extends Specification {
         then:
         mapped.failure
         mapped.cause.class == CannotParseInteger
-    }
-
-    class CannotParseInteger extends RuntimeException {
-        CannotParseInteger(String message) {
-            super(message)
-        }
     }
 }
