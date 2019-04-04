@@ -1,5 +1,7 @@
 import io.vavr.Function1
 import io.vavr.PartialFunction
+import io.vavr.collection.List
+import io.vavr.control.Either
 import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
@@ -51,26 +53,41 @@ class Workshop extends Specification {
         successTry.get() == 1
     }
 
-    def "convert Try to Option"() {
+    def "conversion: try -> option"() {
         given:
         Try<Integer> success = Try.of({ 1 })
-        Try<Integer> failure = Try.failure(new IllegalStateException())
+        Try<Integer> fail = Try.failure(new IllegalStateException())
 
         when:
         Option<Integer> successOption = success // convert here, hint: toOption()
-        Option<Integer> failureOption = failure // convert here, hint: toOption()
+        Option<Integer> failOption = fail // convert here, hint: toOption()
 
         then:
         successOption == Option.some(1)
-        failureOption.empty
+        failOption == Option.none()
     }
 
+    def "conversion: try -> either"() {
+        given:
+        IllegalStateException exception = new IllegalStateException()
+        Try<Integer> success = Try.of({ 1 })
+        Try<Integer> fail = Try.failure(exception)
+
+        when:
+        Either<Throwable, Integer> successEither = success // convert here, hint: toEither()
+        Either<Throwable, Integer> failEither = fail // convert here, hint: toEither()
+
+        then:
+        successEither == Either.right(1)
+        failEither == Either.left(exception)
+    }
+    
     def "wrap div (4 / 2) with try and verify success and value"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> success = Try.of({ -1 }) // wrap here
+        Try<Integer> dived = Try.of({ -1 }) // wrap here
 
         then:
         false // verify success here, hint: isSuccess
@@ -99,25 +116,33 @@ class Workshop extends Specification {
 
         then:
         false // verify success here
+        false // verify value here
         false // verify failure here, hint: isFailure()
         false // verify failure class here, hint: getCause(), .class
     }
 
-    def "sum all values of try sequence or return the first failure"() {
+    def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         Try<Integer> parsed1 = Try.of({ parse.apply('1') })
         Try<Integer> parsed2 = Try.of({ parse.apply('2') })
         Try<Integer> parsed3 = Try.of({ parse.apply('3') })
         Try<Integer> parsed4 = Try.of({ parse.apply('4') })
-        Try<Integer> failure = Try.of({ parse.apply('a') })
+        Try<Integer> failure1 = Try.of({ parse.apply('a') })
+        Try<Integer> failure2 = Try.of({ parse.apply('b') })
+
+        and:
+        List<Try<Integer>> from1To4 = List.of(parsed1, parsed2, parsed3, parsed4)
+        List<Try<Integer>> all = List.of(parsed1, parsed2, parsed3, parsed4, failure1, failure2)
 
         when:
-        Try<Integer> sum = Try.of({ -1 }) // sum here parsed1,...,parsed4; hint: sequence, map
-        Try<Integer> fail = Try.of({ -1 }) // sum here parsed1,...,parsed4, failure, hint: sequence, map
+        Try<Number> sum = from1To4 // sum here from1To3, hint: sequence, map
+        Try<Number> fail = all // sum here all, hint: sequence, map
 
         then:
-        sum == Try.of({ 10 })
+        sum.success
+        sum.get() == 10
+        and:
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'

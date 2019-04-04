@@ -47,8 +47,8 @@ class Answers extends Specification {
         Option<Integer> notEmptyOption = Option.some(1)
 
         when:
-        Try<Integer> failTry = emptyOption.toTry()
         Try<Integer> successTry = notEmptyOption.toTry()
+        Try<Integer> failTry = emptyOption.toTry()
 
         then:
         failTry.failure
@@ -123,7 +123,6 @@ class Answers extends Specification {
         then:
         parsed.success
         parsed.get() == 1
-        and:
         notParsed.failure
         notParsed.cause.class == NumberFormatException
     }
