@@ -135,12 +135,17 @@ class Answers extends Specification {
         Try<Integer> parsed2 = Try.of({ parse.apply('2') })
         Try<Integer> parsed3 = Try.of({ parse.apply('3') })
         Try<Integer> parsed4 = Try.of({ parse.apply('4') })
-        Try<Integer> failure = Try.of({ parse.apply('a') })
+        Try<Integer> failure1 = Try.of({ parse.apply('a') })
+        Try<Integer> failure2 = Try.of({ parse.apply('b') })
+        
+        and:
+        List<Try<Integer>> from1To4 = List.of(parsed1, parsed2, parsed3, parsed4)
+        List<Try<Integer>> all = List.of(parsed1, parsed2, parsed3, parsed4, failure1, failure2)
 
         when:
-        Try<Number> sum = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4))
+        Try<Number> sum = Try.sequence(from1To4)
                 .map({ it.sum() })
-        Try<Number> fail = Try.sequence(List.of(parsed1, parsed2, parsed3, parsed4, failure))
+        Try<Number> fail = Try.sequence(all)
                 .map({ it.sum() })
 
         then:
