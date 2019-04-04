@@ -9,8 +9,7 @@ import spock.lang.Specification
 import java.nio.file.NoSuchFileException
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate
-
+import java.util.function.Predicate 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -148,17 +147,15 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "parse number, if success - square it, otherwise do nothing"() {
+    def "parse number then if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
         def letter = 'a'
-        Try<Integer> parsed = Try.of({ -1 }) // try to parse number here
-        Try<Integer> notParsed = Try.of({ -1 }) // try to parse letter here
 
         when:
-        Try<Integer> squared = parsed // square here, hint: map
-        Try<Integer> fail = notParsed // square here, hint: map
+        Try<Integer> squared = number // try to parse number here, then square, hint: map
+        Try<Integer> fail = letter // try to parse number here, then square, hint: map
 
         then:
         squared.success
@@ -166,10 +163,57 @@ class Workshop extends Specification {
         and:
         fail.failure
         fail.cause.class == NumberFormatException
-        fail.cause.message == 'For input string: "a"'
     }
 
-    def "try to parse a number, if success perform side-effect - increment counter, otherwise do nothing"() {
+    def "get person from database, and then try to estimate income"() {
+        given:
+        Function<Person, Integer> estimateIncome = {
+            switch (it.id) {
+                case 1:
+                    throw new RuntimeException()
+                default:
+                    return 30
+            }
+        }
+        and:
+        def personWithIncome = 2
+        def personWithoutIncome = 1
+
+        when:
+        Try<Integer> withIncome = personWithIncome // hint: PersonRepository.findById, map, estimateIncome
+        Try<Integer> withoutIncome = personWithoutIncome // hint: PersonRepository.findById, map, estimateIncome
+
+        then:
+        withIncome.success
+        withoutIncome.failure
+        withoutIncome.getCause().class == CannotEstimateIncome
+    }
+
+    def "get person from database, and then try to estimate income wrapped with Try"() {
+        given:
+        Function<Person, Try<Integer>> estimateIncome = {
+            switch (it.id) {
+                case 1:
+                    return Try.failure(new CannotEstimateIncome())
+                default:
+                    return Try.success(20)
+            }
+        }
+        and:
+        def personWithoutIncome = 1
+        def personWithIncome = 2
+
+        when:
+        Try<Integer> withIncome = personWithIncome // hint: PersonRepository.findById, map, estimateIncome
+        Try<Integer> withoutIncome = personWithoutIncome // hint: PersonRepository.findById, map, estimateIncome
+
+        then:
+        withIncome.success
+        withoutIncome.failure
+        withoutIncome.getCause().class == CannotEstimateIncome
+    }
+
+    def "performing side-effects: try to parse a number; if success - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -177,24 +221,63 @@ class Workshop extends Specification {
         def successCounter = 0
 
         when:
-        Try<Integer> squared = parsed // try to parse number and perform side-effect here (increment), hint: andThen
-        Try<Integer> fail = notParsed // try to parse number and perform side-effect here (increment), hint: andThen
+        Try.of({ parse.apply(number) }) // increment counter here, hint: andThen
+        Try.of({ parse.apply(letter) }) // increment counter here, hint: andThen
 
         then:
-        squared.success
-        squared.get() == 2
         successCounter == 1
-        and:
-        fail.failure
-        fail.cause.class == NumberFormatException
-        fail.cause.message == 'For input string: "a"'
     }
 
-    def "map value with a partial function; if not defined -> NoSuchElementException"() {
+    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
+        given:
+        def failureCounter = 0
+        def successCounter = 0
+        def existingId = 1
+        def databaseConnectionProblem = 2
+
+        when:
+        DatabaseRepository.findById(existingId) // increment counter here, hint: onSuccess
+        DatabaseRepository.findById(databaseConnectionProblem) // increment counter here, hint: onSuccess
+
+        then:
+        successCounter == 1
+        failureCounter == 1
+    }
+
+    def "performing side-effects: get person from database, change age and then try to save"() {
+        given:
+        def canBeSavedId = 1
+        def userModifiedId = 2
+        def connectionProblemId = 3
+        def fakeId = 4
+
+        when:
+        Try<Person> tried1 = PersonRepository.findById(canBeSavedId) // change age and try to save, hint: map, andThenTry
+        and:
+        Try<Person> tried2 = PersonRepository.findById(userModifiedId) // change age and try to save, hint: map, andThenTry
+        and:
+        Try<Person> tried3 = PersonRepository.findById(connectionProblemId) // change age and try to save, hint: map, andThenTry
+        and:
+        Try<Person> tried4 = PersonRepository.findById(fakeId) // change age and try to save, hint: map, andThenTry
+
+        then:
+        tried1.success
+        and:
+        tried2.failure
+        tried2.cause.class == PersonModifiedInMeantimeException
+        and:
+        tried3.failure
+        tried3.cause.class == DatabaseConnectionProblem
+        and:
+        tried4.failure
+        tried4.cause.class == EntityNotFoundException
+    }
+
+    def "try to parse number, then map value with a partial function; if not defined -> NoSuchElementException"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> zero = Try.of({ parse.apply('0') })
-        Try<Integer> two = Try.of({ parse.apply('2') })
+        String zero = '0'
+        String two = '2'
 
         and:
         PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
@@ -203,8 +286,8 @@ class Workshop extends Specification {
                 .partial({ true })
 
         when:
-        Try<Integer> dived = zero // map here using div, hint: collect
-        Try<Integer> summed = two // map here using add, hint: collect
+        Try<Integer> summed = Try.of({ parse.apply(two) }) // convert here, hint: collect, use add()
+        Try<Integer> dived = Try.of({ parse.apply(zero) }) // convert here, hint: collect, use div()
 
         then:
         summed.success
@@ -253,32 +336,22 @@ class Workshop extends Specification {
         filteredKid.cause.class == NotAnAdultException
     }
 
-    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
+    def "try to find in cache, if not found - then try to find in database"() {
         given:
-        def failureCounter = 0
-        def successCounter = 0
-        def existingId = 1
-        def databaseConnectionProblem = 2
+        def fromDatabaseId = 4
+        def fromCacheId = 20
+        def databaseConnectionProblemId = 2
+        
+        and:
+        /*
+        use: CacheRepository.findById, DatabaseRepository.findById, hint: orElse
+         */
+        Function<Integer, Try<String>> findById = { Try.success(1)}
 
         when:
-        DatabaseRepository.findById(existingId) // handle side effect here, hint: onSuccess
-        DatabaseRepository.findById(databaseConnectionProblem) // handle side effect here, hint: onFailure
-
-        then:
-        successCounter == 1
-        failureCounter == 1
-    }
-
-    def "try to find in cache, then try to find in database"() {
-        given:
-        def fromDatabaseId = 1
-        def fromCacheId = 2
-        def backupConnectionProblemId = 3
-
-        when:
-        Try<String> fromDatabase = RepositoryFacade.findById(fromDatabaseId)
-        Try<String> fromCache = RepositoryFacade.findById(fromCacheId)
-        Try<String> backupConnectionProblem = RepositoryFacade.findById(backupConnectionProblemId)
+        Try<String> fromDatabase = findById.apply(fromDatabaseId)
+        Try<String> fromCache = findById.apply(fromCacheId)
+        Try<String> backupConnectionProblem = findById.apply(databaseConnectionProblemId)
 
         then:
         fromDatabase.success
@@ -288,7 +361,7 @@ class Workshop extends Specification {
         fromCache.get() == 'from cache'
         and:
         backupConnectionProblem.failure
-        backupConnectionProblem.cause.class == CacheUserCannotBeFound
+        backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
     def "if database connection error, recover with default response"() {
@@ -303,10 +376,52 @@ class Workshop extends Specification {
 
         then:
         byIdSuccess.success
-        byIdSuccess.get() == 'found-by-id'
+        byIdSuccess.get() == 'from database'
         and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
+    }
+
+    def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {
+        given:
+        def databaseConnectionError = 2
+        def realId = 1
+
+        when:
+        /*
+        use: DatabaseConnectionProblem (has field with userId), BackupRepository.findById, hint: recoverWith
+         */
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId)
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
+
+        then:
+        byIdSuccess.success
+        byIdSuccess.get() == 'from database'
+        and:
+        byIdRecovered.success
+        byIdRecovered.get() == 'from backup'
+    }
+
+    def "recovery: CacheSynchronization/DatabaseConnectionProblem - default answer, CacheUserCannotBeFound - database request"() {
+        given:
+        def userFromCache = 1
+        def databaseConnection = 2
+        def userFromDatabase = 4
+        def cacheSynchronization = 5
+
+        when:
+        Function<Integer, Try<String>> findById = {
+            CacheRepository.findById(it)
+            // use: CacheSynchronization, "cache synchronization with database, try again later", hint: recover
+            // use: CacheUserCannotBeFound, DatabaseRepository.findById(it.getUserId()), hint: recoverWith
+            // use: DatabaseConnectionProblem, "cannot connect to database", hint: recover
+        }
+
+        then:
+        findById.apply(userFromCache).get() == 'from cache'
+        findById.apply(userFromDatabase).get() == 'from database'
+        findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
+        findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
 
     def "vavr try with resources: success"() {
@@ -320,11 +435,27 @@ class Workshop extends Specification {
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        Try<String> concat = TWR.usingVavr('NonExistingFile.txt')
+        Try<String> concat = TWR.usingVavr('404.txt')
 
         then:
         concat.failure
         concat.cause.class == NoSuchFileException
-        concat.cause.message == 'NonExistingFile.txt'
+        concat.cause.message == '404.txt'
+    }
+
+    def "pattern matching: map third-party library exceptions to domain exceptions with same message"() {
+        given:
+        Try<Integer> fail = Try.of({ Integer.parseInt("a") })
+
+        when:
+        /*
+        use: pattern matching, NumberFormatException, CannotParseInteger
+        hint: mapFailure, Case, $, instanceOf
+         */
+        Try<Integer> mapped = fail
+
+        then:
+        mapped.failure
+        mapped.cause.class == CannotParseInteger
     }
 }

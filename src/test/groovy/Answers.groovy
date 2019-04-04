@@ -15,8 +15,7 @@ import java.util.function.Supplier
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
-import static io.vavr.Predicates.instanceOf
-
+import static io.vavr.Predicates.instanceOf 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -181,7 +180,7 @@ class Answers extends Specification {
         Function<Person, Integer> estimateIncome = {
             switch (it.id) {
                 case 1:
-                    throw new RuntimeException()
+                    throw new CannotEstimateIncome()
                 default:
                     return 30
             }
@@ -199,6 +198,7 @@ class Answers extends Specification {
         then:
         withIncome.success
         withoutIncome.failure
+        withoutIncome.getCause().class == CannotEstimateIncome
     }
 
     def "get person from database, and then try to estimate income wrapped with Try"() {
@@ -206,14 +206,14 @@ class Answers extends Specification {
         Function<Person, Try<Integer>> estimateIncome = {
             switch (it.id) {
                 case 1:
-                    return Try.failure(new RuntimeException())
+                    return Try.failure(new CannotEstimateIncome())
                 default:
                     return Try.success(20)
             }
         }
         and:
-        def personWithoutIncome = 1
         def personWithIncome = 2
+        def personWithoutIncome = 1
 
         when:
         Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
@@ -224,6 +224,7 @@ class Answers extends Specification {
         then:
         withIncome.success
         withoutIncome.failure
+        withoutIncome.getCause().class == CannotEstimateIncome
     }
 
     def "performing side-effects: try to parse a number; if success - increment counter, otherwise do nothing"() {
@@ -364,6 +365,8 @@ class Answers extends Specification {
         def fromDatabaseId = 4
         def fromCacheId = 20
         def databaseConnectionProblemId = 2
+        
+        and:
         Function<Integer, Try<String>> findById = {
             id -> CacheRepository.findById(id).orElse({ DatabaseRepository.findById(id) })
         }
@@ -404,7 +407,7 @@ class Answers extends Specification {
         byIdRecovered.get() == defaultResponse
     }
 
-    def "recovery: if database connection error, recover with request to other (backup) database"() {
+    def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {
         given:
         def databaseConnectionError = 2
         def realId = 1
@@ -434,7 +437,7 @@ class Answers extends Specification {
         Function<Integer, Try<String>> findById = {
             CacheRepository.findById(it)
                     .recover(CacheSynchronization.class, "cache synchronization with database, try again later")
-                    .recoverWith(CacheUserCannotBeFound.class, { DatabaseRepository.findById(it.getUserId()) })
+                    .recoverWith(CacheUserCannotBeFound.class, { DatabaseRepository.findById(it.userId) })
                     .recover(DatabaseConnectionProblem.class, "cannot connect to database")
         }
 
