@@ -72,7 +72,7 @@ class Answers extends Specification {
         successOption == Option.some(1)
         failOption == Option.none()
     }
-    
+
     def "conversion: try -> either"() {
         given:
         IllegalStateException exception = new IllegalStateException()
@@ -93,7 +93,7 @@ class Answers extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> dived = Try.of({ div.apply(4, 2) }) // wrap here
+        Try<Integer> dived = Try.of({ div.apply(4, 2) })
 
         then:
         dived.success
@@ -123,6 +123,7 @@ class Answers extends Specification {
         then:
         parsed.success
         parsed.get() == 1
+        and:
         notParsed.failure
         notParsed.cause.class == NumberFormatException
     }
@@ -145,12 +146,13 @@ class Answers extends Specification {
         then:
         sum.success
         sum.get() == 10
+        and:
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "parse number, if success - square it, otherwise do nothing"() {
+    def "parse number then if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -170,7 +172,57 @@ class Answers extends Specification {
         fail.cause.class == NumberFormatException
     }
 
-    def "try to parse a number, if success - increment counter, otherwise do nothing"() {
+    def "get person from database, and then try to estimate income"() {
+        given:
+        Function<Person, Integer> estimateIncome = {
+            switch (it.id) {
+                case 1:
+                    throw new RuntimeException()
+                default:
+                    return 30
+            }
+        }
+        and:
+        def personWithoutIncome = 1
+        def personWithIncome = 2
+
+        when:
+        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
+                .map({ estimateIncome.apply(it) })
+        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
+                .map({ estimateIncome.apply(it) })
+
+        then:
+        withIncome.success
+        withoutIncome.failure
+    }
+
+    def "get person from database, and then try to estimate income wrapped with Try"() {
+        given:
+        Function<Person, Try<Integer>> estimateIncome = {
+            switch (it.id) {
+                case 1:
+                    return Try.failure(new RuntimeException())
+                default:
+                    return Try.success(20)
+            }
+        }
+        and:
+        def personWithoutIncome = 1
+        def personWithIncome = 2
+
+        when:
+        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
+                .flatMap({ estimateIncome.apply(it) })
+        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
+                .flatMap({ estimateIncome.apply(it) })
+
+        then:
+        withIncome.success
+        withoutIncome.failure
+    }
+
+    def "try to parse a number, if success perform side-effect - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -191,11 +243,48 @@ class Answers extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "map value with a partial function; if not defined -> NoSuchElementException"() {
+    def "get person from database, change age and then try to save"() {
+        given:
+        def canBeSavedId = 1
+        def userModifiedId = 2
+        def connectionProblemId = 3
+        def fakeId = 4
+
+        when:
+        Try<Person> tried1 = PersonRepository.findById(canBeSavedId)
+                .map({ it.withAge(1) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried2 = PersonRepository.findById(userModifiedId)
+                .map({ it.withAge(2) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried3 = PersonRepository.findById(connectionProblemId)
+                .map({ it.withAge(3) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+        and:
+        Try<Person> tried4 = PersonRepository.findById(fakeId)
+                .map({ it.withAge(4) })
+                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+
+        then:
+        tried1.success
+        and:
+        tried2.failure
+        tried2.cause.class == PersonModifiedInMeantimeException
+        and:
+        tried3.failure
+        tried3.cause.class == DatabaseConnectionProblem
+        and:
+        tried4.failure
+        tried4.cause.class == EntityNotFoundException
+    }
+
+    def "try to parse number, then map value with a partial function; if not defined -> NoSuchElementException"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> zero = Try.of({ parse.apply('0') })
-        Try<Integer> two = Try.of({ parse.apply('2') })
+        String zero = '0'
+        String two = '2'
 
         and:
         PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
@@ -204,8 +293,8 @@ class Answers extends Specification {
                 .partial({ true })
 
         when:
-        Try<Integer> dived = zero.collect(div)
-        Try<Integer> summed = two.collect(add)
+        Try<Integer> summed = Try.of({ parse.apply(two) }).collect(add)
+        Try<Integer> dived = Try.of({ parse.apply(zero) }).collect(div)
 
         then:
         summed.success
@@ -254,7 +343,7 @@ class Answers extends Specification {
         filteredKid.cause.class == NotAnAdultException
     }
 
-    def "on failure increment failure counter, on success increment success counter"() {
+    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
         given:
         def failureCounter = 0
         def successCounter = 0
@@ -272,16 +361,16 @@ class Answers extends Specification {
         failureCounter == 1
     }
 
-    def "try to find in cache, then try to find in database"() {
+    def "try to find in cache, if not found - then try to find in database"() {
         given:
         def fromDatabaseId = 4
         def fromCacheId = 20
-        def databaseConnectionId = 2
+        def databaseConnectionProblemId = 2
 
         when:
         Try<String> fromDatabase = RepositoryAnswer.findById(fromDatabaseId)
         Try<String> fromCache = RepositoryAnswer.findById(fromCacheId)
-        Try<String> backupConnectionProblem = RepositoryAnswer.findById(databaseConnectionId)
+        Try<String> backupConnectionProblem = RepositoryAnswer.findById(databaseConnectionProblemId)
 
         then:
         fromDatabase.success
@@ -302,9 +391,7 @@ class Answers extends Specification {
 
         when:
         Try<String> byIdSuccess = DatabaseRepository.findById(realId)
-                .recover(DatabaseConnectionProblem.class, {
-            defaultResponse
-        } as Function) // recover with other database
+                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
         Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
                 .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
 
@@ -314,6 +401,25 @@ class Answers extends Specification {
         and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
+    }
+
+    def "if database connection error, recover with request to other (backup) database"() {
+        given:
+        def databaseConnectionError = 2
+        def realId = 1
+
+        when:
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId)
+                .recoverWith(DatabaseConnectionProblem.class, { BackupRepository.findById(it.userId) })
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
+                .recoverWith(DatabaseConnectionProblem.class, { BackupRepository.findById(it.userId) })
+
+        then:
+        byIdSuccess.success
+        byIdSuccess.get() == 'from database'
+        and:
+        byIdRecovered.success
+        byIdRecovered.get() == 'from backup'
     }
 
     def "vavr try with resources: success"() {
@@ -327,102 +433,15 @@ class Answers extends Specification {
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        Try<String> concat = TWRAnswer.usingVavr('NonExistingFile.txt')
+        Try<String> concat = TWRAnswer.usingVavr('404.txt')
 
         then:
         concat.failure
         concat.cause.class == NoSuchFileException
-        concat.cause.message == 'NonExistingFile.txt'
-    }
-    
-    def "get person from database, and then try to estimate income"() {
-        given:
-        Function<Person, Integer> estimateIncome = { 
-            switch (it.id) {
-                case 1:
-                    throw new RuntimeException()
-                default:
-                    return 30
-            }
-        }
-        and:
-        def personWithoutIncome = 1
-        def personWithIncome = 2
-
-        when:
-        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
-                .map({ estimateIncome.apply(it) })
-        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
-                .map({ estimateIncome.apply(it) })
-        
-        then:
-        withIncome.success
-        withoutIncome.failure
+        concat.cause.message == '404.txt'
     }
 
-    def "get person from database, and then try to estimate income with flatMap"() {
-        given:
-        Function<Person, Try<Integer>> estimateIncome = {
-            switch (it.id) {
-                case 1:
-                    return Try.failure(new RuntimeException())
-                default:
-                    return Try.success(20)
-            }
-        }
-        and:
-        def personWithoutIncome = 1
-        def personWithIncome = 2
-
-        when:
-        Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
-                .flatMap({ estimateIncome.apply(it) })
-        Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
-                .flatMap({ estimateIncome.apply(it) })
-
-        then:
-        withIncome.success
-        withoutIncome.failure
-    }
-
-    def "get person from database, change age and then try to save"() {
-        given:
-        def canBeSavedId = 1
-        def userModifiedId = 2
-        def connectionProblemId = 3
-        def fakeId = 4
-
-        when:
-        Try<Person> tried1 = PersonRepository.findById(canBeSavedId)
-                .map({ it.withAge(1) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
-        and:
-        Try<Person> tried2 = PersonRepository.findById(userModifiedId)
-                .map({ it.withAge(2) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
-        and:
-        Try<Person> tried3 = PersonRepository.findById(connectionProblemId)
-                .map({ it.withAge(3) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
-        and:
-        Try<Person> tried4 = PersonRepository.findById(fakeId)
-                .map({ it.withAge(4) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
-
-        then:
-        tried1.success
-        and:
-        tried2.failure
-        tried2.cause.class == PersonModifiedInMeantimeException
-        and:
-        tried3.failure
-        tried3.cause.class == DatabaseConnectionProblem
-        and:
-        tried4.failure
-        tried4.cause.class == EntityNotFoundException
-    }
-
-    def "if entity cannot be found in cache try to find in database; if cache is under synchronization with database - return default response"() {
+    def "recovery: CacheSynchronization - default answer, CacheUserCannotBeFound - database request, DatabaseConnectionProblem - default response"() {
         given:
         def userFromCache = 1
         def databaseConnection = 2
@@ -444,15 +463,20 @@ class Answers extends Specification {
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
 
-    def "map exceptions"() {
+    def "pattern matching: map outer exceptions to domain exceptions with same message"() {
         given:
+        Try<Integer> fail = Try.of({ Integer.parseInt("a") })
 
-        expect:
-        Try.of({ Integer.parseInt("a") }).mapFailure(
+        when:
+        Try<Integer> mapped = fail.mapFailure(
                 Case($(instanceOf(NumberFormatException.class)), { new CannotParseInteger(it.message) } as Function)
-        ).cause.class == CannotParseInteger // transform to function
+        )
+
+        then:
+        mapped.failure
+        mapped.cause.class == CannotParseInteger
     }
-    
+
     class CannotParseInteger extends RuntimeException {
         CannotParseInteger(String message) {
             super(message)

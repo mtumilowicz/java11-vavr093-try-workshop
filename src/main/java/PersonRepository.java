@@ -24,7 +24,7 @@ class PersonRepository {
             case 2:
                 throw new PersonModifiedInMeantimeException();
             default:
-                throw new DatabaseConnectionProblem();
+                throw new DatabaseConnectionProblem(person.getId());
         }
     }
 

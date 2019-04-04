@@ -37,12 +37,19 @@ class DatabaseRepository {
     static Try<String> findById(int id) {
         switch (id) {
             case 2:
-                return Try.failure(new DatabaseConnectionProblem());
+                return Try.failure(new DatabaseConnectionProblem(id));
             case 3:
                 return Try.failure(new DatabaseUserCannotBeFound());
             default:
                 return Try.of(() -> "from database");
         }
+    }
+
+}
+
+class BackupRepository {
+    static Try<String> findById(int id) {
+                return Try.of(() -> "from backup");
     }
 
 }
@@ -56,8 +63,9 @@ class CacheUserCannotBeFound extends RuntimeException {
     int userId;
 }
 
+@Value
 class DatabaseConnectionProblem extends RuntimeException {
-
+    int userId;
 }
 
 class CacheSynchronization extends RuntimeException {

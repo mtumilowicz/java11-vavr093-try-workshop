@@ -144,7 +144,7 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "try to parse a number, if success - increment counter, otherwise do nothing"() {
+    def "try to parse a number, if success perform side-effect - increment counter, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -152,8 +152,8 @@ class Workshop extends Specification {
         def successCounter = 0
 
         when:
-        Try<Integer> squared = parsed // try to parse number and increment here, hint: andThen
-        Try<Integer> fail = notParsed // try to parse letter and increment here, hint: andThen
+        Try<Integer> squared = parsed // try to parse number and perform side-effect here (increment), hint: andThen
+        Try<Integer> fail = notParsed // try to parse number and perform side-effect here (increment), hint: andThen
 
         then:
         squared.success
@@ -228,7 +228,7 @@ class Workshop extends Specification {
         filteredKid.cause.class == NotAnAdultException
     }
 
-    def "on failure increment failure counter, on success increment success counter"() {
+    def "performing side-effects: on failure increment failure counter, on success increment success counter"() {
         given:
         def failureCounter = 0
         def successCounter = 0
