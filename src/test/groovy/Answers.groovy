@@ -1,4 +1,3 @@
-import io.vavr.CheckedConsumer
 import io.vavr.Function1
 import io.vavr.PartialFunction
 import io.vavr.collection.List
@@ -8,10 +7,7 @@ import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.nio.file.NoSuchFileException
-import java.util.function.BinaryOperator
-import java.util.function.Function
-import java.util.function.Predicate
-import java.util.function.Supplier
+import java.util.function.*
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
@@ -270,19 +266,19 @@ class Answers extends Specification {
         when:
         Try<Person> tried1 = PersonRepository.findById(canBeSavedId)
                 .map({ it.withAge(1) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+                .andThen({ PersonRepository.save(it) } as Consumer)
         and:
         Try<Person> tried2 = PersonRepository.findById(userModifiedId)
                 .map({ it.withAge(2) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+                .andThen({ PersonRepository.save(it) } as Consumer)
         and:
         Try<Person> tried3 = PersonRepository.findById(connectionProblemId)
                 .map({ it.withAge(3) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+                .andThen({ PersonRepository.save(it) } as Consumer)
         and:
         Try<Person> tried4 = PersonRepository.findById(fakeId)
                 .map({ it.withAge(4) })
-                .andThenTry({ PersonRepository.save(it) } as CheckedConsumer)
+                .andThen({ PersonRepository.save(it) } as Consumer)
 
         then:
         tried1.success

@@ -252,13 +252,13 @@ class Workshop extends Specification {
         def fakeId = 4
 
         when:
-        Try<Person> tried1 = PersonRepository.findById(canBeSavedId) // change age and try to save, hint: map, andThenTry
+        Try<Person> tried1 = PersonRepository.findById(canBeSavedId) // change age and try to save, hint: map, andThen
         and:
-        Try<Person> tried2 = PersonRepository.findById(userModifiedId) // change age and try to save, hint: map, andThenTry
+        Try<Person> tried2 = PersonRepository.findById(userModifiedId) // change age and try to save, hint: map, andThen
         and:
-        Try<Person> tried3 = PersonRepository.findById(connectionProblemId) // change age and try to save, hint: map, andThenTry
+        Try<Person> tried3 = PersonRepository.findById(connectionProblemId) // change age and try to save, hint: map, andThen
         and:
-        Try<Person> tried4 = PersonRepository.findById(fakeId) // change age and try to save, hint: map, andThenTry
+        Try<Person> tried4 = PersonRepository.findById(fakeId) // change age and try to save, hint: map, andThen
 
         then:
         tried1.success
