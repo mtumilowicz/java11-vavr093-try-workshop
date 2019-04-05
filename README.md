@@ -38,6 +38,7 @@ computed value
         }
     }
     ```
+    * note that we could also wrap computations that throws check exception (argument type - `CheckedFunction0`)
 * conversion: `List<Try<T>>` -> `Try<List<T>>`
     * `Try.sequence(list)`
     * If any of the `Try` is `Failure`, returns first `Failure`
@@ -46,3 +47,18 @@ computed value
         * `Try<T> andThen(Runnable runnable)`
         * `onSuccess(Consumer<? super T> action)`
     * on failure: `Try<T> onFailure(Consumer<? super Throwable> action)`
+* mapping with partial function
+    * `Try<R> collect(PartialFunction<? super T, ? extends R> partialFunction)`
+    * if function is not defined at a value - returns `Failure(NoSuchElementException)`
+* we could filter value (same as `Option`)
+* lazy alternative
+    * `Try<T> orElse(Supplier<? extends Try<? extends T>> supplier)`
+* recovery from specific exceptions:
+    * `Try<T> recover(Class<X> exception, Function<? super X, ? extends T> f)`
+    * `Try<T> recoverWith(Class<X> exception, Function<? super X, Try<? extends T>> f)`
+* finally block
+    * `Try<T> andFinally(Runnable runnable)`
+* try with resources
+    * `Try.withResources(CheckedFunction0<? extends T1> t1Supplier)`
+* mapping exception
+    * `Try<T> mapFailure(Match.Case<? extends Throwable, ? extends Throwable>... cases)`
