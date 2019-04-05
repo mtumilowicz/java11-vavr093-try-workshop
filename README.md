@@ -27,6 +27,7 @@ computed value
     * `option.toTry()`
         * `None` -> `Failure(NoSuchElementException)`
 * conversion: `Try<T>` -> `Either<T>`
+    * `try.toEihter()`
 * wrapping computations
     ```
     static <T> Try<T> of(CheckedFunction0<? extends T> supplier) {
@@ -41,12 +42,13 @@ computed value
     * note that we could also wrap computations that throws check exception (argument type - `CheckedFunction0`)
 * conversion: `List<Try<T>>` -> `Try<List<T>>`
     * `Try.sequence(list)`
-    * If any of the `Try` is `Failure`, returns first `Failure`
+    * if any of the `Try` is `Failure`, returns first `Failure`
 * performing side-effects
     * on success: 
         * `Try<T> andThen(Runnable runnable)`
         * `onSuccess(Consumer<? super T> action)`
-    * on failure: `Try<T> onFailure(Consumer<? super Throwable> action)`
+    * on failure: 
+        * `Try<T> onFailure(Consumer<? super Throwable> action)`
 * mapping with partial function
     * `Try<R> collect(PartialFunction<? super T, ? extends R> partialFunction)`
     * if function is not defined at a value - returns `Failure(NoSuchElementException)`
