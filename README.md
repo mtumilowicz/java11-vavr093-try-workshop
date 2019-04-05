@@ -26,8 +26,6 @@ computed value
     * `try.toOption()`
     * `option.toTry()`
         * `None` -> `Failure(NoSuchElementException)`
-* conversion: `Try<T>` -> `Either<T>`
-    * `try.toEihter()`
 * wrapping computations
     ```
     static <T> Try<T> of(CheckedFunction0<? extends T> supplier) {
