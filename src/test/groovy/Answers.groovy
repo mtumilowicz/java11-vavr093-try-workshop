@@ -1,7 +1,6 @@
 import io.vavr.Function1
 import io.vavr.PartialFunction
 import io.vavr.collection.List
-import io.vavr.control.Either
 import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
@@ -11,8 +10,7 @@ import java.util.function.*
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
-import static io.vavr.Predicates.instanceOf
-
+import static io.vavr.Predicates.instanceOf 
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -67,21 +65,6 @@ class Answers extends Specification {
         then:
         successOption == Option.some(1)
         failOption == Option.none()
-    }
-
-    def "conversion: try -> either"() {
-        given:
-        IllegalStateException exception = new IllegalStateException()
-        Try<Integer> success = Try.of({ 1 })
-        Try<Integer> fail = Try.failure(exception)
-
-        when:
-        Either<Throwable, Integer> successEither = success.toEither()
-        Either<Throwable, Integer> failEither = fail.toEither()
-
-        then:
-        successEither == Either.right(1)
-        failEither == Either.left(exception)
     }
 
     def "wrap div (4 / 2) with try and verify success and value"() {
