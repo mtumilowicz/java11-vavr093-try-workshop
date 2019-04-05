@@ -11,7 +11,8 @@ import java.util.function.*
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
-import static io.vavr.Predicates.instanceOf 
+import static io.vavr.Predicates.instanceOf
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -122,6 +123,18 @@ class Answers extends Specification {
         notParsed.cause.class == NumberFormatException
     }
 
+    def "checked exceptions handling: wrap method that throws checked exception"() {
+        given:
+        Try<Integer> one = ParserAnswer.parse("1")
+        Try<Integer> fail = ParserAnswer.parse("a")
+        
+        expect:
+        one.success
+        one.get() == 1
+        fail.failure
+        fail.getCause().class == CannotParseInteger
+    }
+
     def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
@@ -131,7 +144,7 @@ class Answers extends Specification {
         Try<Integer> parsed4 = Try.of({ parse.apply('4') })
         Try<Integer> failure1 = Try.of({ parse.apply('a') })
         Try<Integer> failure2 = Try.of({ parse.apply('b') })
-        
+
         and:
         List<Try<Integer>> from1To4 = List.of(parsed1, parsed2, parsed3, parsed4)
         List<Try<Integer>> all = List.of(parsed1, parsed2, parsed3, parsed4, failure1, failure2)
@@ -361,7 +374,7 @@ class Answers extends Specification {
         def fromDatabaseId = 4
         def fromCacheId = 20
         def databaseConnectionProblemId = 2
-        
+
         and:
         Function<Integer, Try<String>> findById = {
             id -> CacheRepository.findById(id).orElse({ DatabaseRepository.findById(id) })

@@ -120,6 +120,18 @@ class Workshop extends Specification {
         false // verify failure class here, hint: getCause(), .class
     }
 
+    def "checked exceptions handling: wrap method that throws checked exception"() {
+        given:
+        Try<Integer> one = Parser.parse("1") // rewrite Parser.parse 
+        Try<Integer> fail = Parser.parse("a") // rewrite Parser.parse
+
+        expect:
+        one.success
+        one.get() == 1
+        fail.failure
+        fail.getCause().class == CannotParseInteger
+    }
+
     def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
