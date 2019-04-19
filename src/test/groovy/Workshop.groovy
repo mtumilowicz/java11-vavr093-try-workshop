@@ -200,8 +200,8 @@ class Workshop extends Specification {
         def personWithIncome = 2
 
         when:
-        Try<Integer> withIncome = personWithIncome // hint: PersonRepository.findById, map, estimateIncome
-        Try<Integer> withoutIncome = personWithoutIncome // hint: PersonRepository.findById, map, estimateIncome
+        Try<Integer> withIncome = personWithIncome // hint: PersonRepository.findById, flatMap, estimateIncome
+        Try<Integer> withoutIncome = personWithoutIncome // hint: PersonRepository.findById, flatMap, estimateIncome
 
         then:
         withIncome.success
