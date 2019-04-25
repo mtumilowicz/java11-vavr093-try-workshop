@@ -15,7 +15,8 @@ import java.util.stream.Collectors
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
-import static io.vavr.Predicates.instanceOf 
+import static io.vavr.Predicates.instanceOf
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -154,26 +155,25 @@ class Answers extends Specification {
 
     def "count average expenses in a year (by month) or return first failure"() {
         given:
-        def spendingByMonthExceptional = {
-            switch (it) {
-                case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
-                case Month.APRIL: throw new RuntimeException("Expenses in April cannot be loaded.")
-                default: it.getValue()
-            }
-        }
-        
-        and:
         def spendingByMonth = {
             it.getValue()
         }
-        
+
+        and:
+        def spendingByMonthExceptional = {
+            switch (it) {
+                case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
+                default: it.getValue()
+            }
+        }
+
         and:
         Function<Function<Month, Integer>, Map<Month, Try<Integer>>> expensesByMonthMap = {
             spendingIn ->
                 HashMap.ofAll(Arrays.stream(Month.values())
-                    .collect(Collectors.toMap(
-                            Function.identity(), 
-                            {month -> Try.of({spendingIn(month)})})))
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                { month -> Try.of({ spendingIn(month) }) })))
         }
 
         when:
@@ -181,16 +181,16 @@ class Answers extends Specification {
         Seq<Try<Integer>> withFailure = expensesByMonthMap.apply(spendingByMonthExceptional).values()
 
         and:
-        def sequence1 = Try.sequence(withoutFailure)
-        def sequence2 = Try.sequence(withFailure)
-        
+        Try<Option<Double>> average = Try.sequence(withoutFailure).map({ it.average() })
+        Try<Option<Double>> firstFailure = Try.sequence(withFailure).map({ it.average() })
+
         then:
-        sequence1.success
-        sequence1.map({it.average()}).get() == Option.some(6.5D)
+        average.success
+        average.get() == Option.some(6.5D)
         and:
-        sequence2.failure
-        sequence2.cause.class == RuntimeException
-        sequence2.cause.message == "Expenses in March cannot be loaded."
+        firstFailure.failure
+        firstFailure.cause.class == RuntimeException
+        firstFailure.cause.message == "Expenses in March cannot be loaded."
     }
 
     def "parse number then if success - square it, otherwise do nothing"() {

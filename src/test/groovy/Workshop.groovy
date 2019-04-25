@@ -1,13 +1,19 @@
 import io.vavr.Function1
 import io.vavr.PartialFunction
+import io.vavr.collection.HashMap
 import io.vavr.collection.List
+import io.vavr.collection.Map
+import io.vavr.collection.Seq
 import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.time.Month
 import java.util.function.BinaryOperator
 import java.util.function.Function
-import java.util.function.Predicate 
+import java.util.function.Predicate
+import java.util.stream.Collectors
+
 /**
  * Created by mtumilowicz on 2019-03-03.
  */
@@ -130,8 +136,8 @@ class Workshop extends Specification {
         List<Try<Integer>> all = List.of(parsed1, parsed2, parsed3, parsed4, failure1, failure2)
 
         when:
-        Try<Number> sum = from1To4 // sum here from1To3, hint: sequence, map
-        Try<Number> fail = all // sum here all, hint: sequence, map
+        Try<Number> sum = from1To4 // sum here from1To3, hint: sequence, map, sum
+        Try<Number> fail = all // sum here all, hint: sequence, map, sum
 
         then:
         sum.success
@@ -142,6 +148,46 @@ class Workshop extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
+    def "count average expenses in a year (by month) or return first failure"() {
+        given:
+        def spendingByMonth = {
+            it.getValue()
+        }
+
+        and:
+        def spendingByMonthExceptional = {
+            switch (it) {
+                case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
+                default: it.getValue()
+            }
+        }
+
+        and:
+        Function<Function<Month, Integer>, Map<Month, Try<Integer>>> expensesByMonthMap = {
+            spendingIn ->
+                HashMap.ofAll(Arrays.stream(Month.values())
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                { month -> Try.of({ spendingIn(month) }) })))
+        }
+
+        when:
+        Seq<Try<Integer>> withoutFailure = expensesByMonthMap.apply(spendingByMonth).values()
+        Seq<Try<Integer>> withFailure = expensesByMonthMap.apply(spendingByMonthExceptional).values()
+
+        and:
+        Try<Option<Double>> average = withoutFailure // hint: sequence, map, average
+        Try<Option<Double>> firstFailure = withFailure // hint: sequence, map, average
+
+        then:
+        average.success
+        average.get() == Option.some(6.5D)
+        and:
+        firstFailure.failure
+        firstFailure.cause.class == RuntimeException
+        firstFailure.cause.message == "Expenses in March cannot be loaded."
+    }
+    
     def "parse number then if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
