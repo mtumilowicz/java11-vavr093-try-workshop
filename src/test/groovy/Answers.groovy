@@ -181,8 +181,10 @@ class Answers extends Specification {
         Seq<Try<Integer>> withFailure = expensesByMonthMap.apply(spendingByMonthExceptional).values()
 
         and:
-        Try<Option<Double>> average = Try.sequence(withoutFailure).map({ it.average() })
-        Try<Option<Double>> firstFailure = Try.sequence(withFailure).map({ it.average() })
+        Try<Option<Double>> average = Try.sequence(withoutFailure)
+                .map({ it.average() })
+        Try<Option<Double>> firstFailure = Try.sequence(withFailure)
+                .map({ it.average() })
 
         then:
         average.success
