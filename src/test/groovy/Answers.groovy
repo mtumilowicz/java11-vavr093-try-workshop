@@ -1,12 +1,17 @@
 import io.vavr.Function1
 import io.vavr.PartialFunction
+import io.vavr.collection.HashMap
 import io.vavr.collection.List
+import io.vavr.collection.Map
+import io.vavr.collection.Seq
 import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.nio.file.NoSuchFileException
+import java.time.Month
 import java.util.function.*
+import java.util.stream.Collectors
 
 import static io.vavr.API.$
 import static io.vavr.API.Case
@@ -110,7 +115,7 @@ class Answers extends Specification {
         given:
         Try<Integer> one = ParserAnswer.parse("1")
         Try<Integer> fail = ParserAnswer.parse("a")
-        
+
         expect:
         one.success
         one.get() == 1
@@ -145,6 +150,45 @@ class Answers extends Specification {
         fail.failure
         fail.cause.class == NumberFormatException
         fail.cause.message == 'For input string: "a"'
+    }
+
+    def "average"() {
+        given:
+        def spendingByMonthExceptional = {
+            switch (it) {
+                case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
+                default: it.getValue()
+            }
+        }
+        
+        and:
+        def spendingByMonth = {
+            it.getValue()
+        }
+        
+        and:
+        Function<Function<Month, Integer>, Map<Month, Try<Integer>>> expensesByMonthMap = {
+            spendingIn ->
+                HashMap.ofAll(Arrays.stream(Month.values())
+                    .collect(Collectors.toMap(
+                            Function.identity(), 
+                            {month -> Try.of({spendingIn(month)})})))
+        }
+
+        when:
+        Seq<Try<Integer>> collect1 = expensesByMonthMap.apply(spendingByMonth).values()
+        Seq<Try<Integer>> collect2 = expensesByMonthMap.apply(spendingByMonthExceptional).values()
+
+        and:
+        def sequence1 = Try.sequence(collect1)
+        def sequence2 = Try.sequence(collect2)
+        
+        then:
+        sequence1.success
+        sequence1.map({it.average()}).get() == Option.some(6.5D)
+        sequence2.failure
+        sequence2.cause.class == RuntimeException
+        sequence2.cause.message == "Expenses in March cannot be loaded."
     }
 
     def "parse number then if success - square it, otherwise do nothing"() {
@@ -253,11 +297,11 @@ class Answers extends Specification {
         successCounter == 1
         failureCounter == 1
     }
-    
+
     def "performing side-effects: difference between onSuccess and andThen - exceptions in onSuccess"() {
         when:
-        Try.success(1).onSuccess({throw new RuntimeException()})
-        
+        Try.success(1).onSuccess({ throw new RuntimeException() })
+
         then:
         thrown(RuntimeException)
     }
@@ -458,11 +502,11 @@ class Answers extends Specification {
         findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
-    
+
     def "vavr try-finally"() {
         given:
         def counter = 0
-        def increment = {counter++}
+        def increment = { counter++ }
         def throwException = 1
         def success = 2
         and:
@@ -472,13 +516,13 @@ class Answers extends Specification {
             }
             it
         }
-        
+
         when:
-        Try.of({operation.apply(throwException)})
-            .andFinally(increment)        
-        Try.of({operation.apply(success)})
-            .andFinally(increment)
-        
+        Try.of({ operation.apply(throwException) })
+                .andFinally(increment)
+        Try.of({ operation.apply(success) })
+                .andFinally(increment)
+
         then:
         counter == 2
     }
