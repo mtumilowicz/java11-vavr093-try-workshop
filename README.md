@@ -15,6 +15,16 @@
 computed value
 * you can think about `Try` as a pair `(Failure, Success) ~ (Throwable, Object)` that has either left or right value
 * you can think about `Try` as an object representation of try-catch-finally
+    ```
+    static <T> Try<T> of(CheckedFunction0<? extends T> supplier) {
+        Objects.requireNonNull(supplier, "supplier is null");
+        try {
+            return new Success<>(supplier.apply());
+        } catch (Throwable t) {
+            return new Failure<>(t);
+        }
+    }
+    ```
 * `interface Try<T> extends Value<T>, Serializable`
     * `interface Value<T> extends Iterable<T>`
 * two implementations:
@@ -27,16 +37,7 @@ computed value
     * `option.toTry()`
         * `None` -> `Failure(NoSuchElementException)`
 * wrapping computations
-    ```
-    static <T> Try<T> of(CheckedFunction0<? extends T> supplier) {
-        Objects.requireNonNull(supplier, "supplier is null");
-        try {
-            return new Success<>(supplier.apply());
-        } catch (Throwable t) {
-            return new Failure<>(t);
-        }
-    }
-    ```
+    * `static <T> Try<T> of(CheckedFunction0<? extends T> supplier)`
     * note that we could also wrap computations that throws check exception (argument type - `CheckedFunction0`)
 * conversion: `List<Try<T>>` -> `Try<List<T>>`
     * `Try.sequence(list)`
