@@ -113,7 +113,7 @@ class Workshop extends Specification {
         one.success
         one.get() == 1
         fail.failure
-        fail.getCause().class == CannotParseInteger
+        fail.cause.class == CannotParseInteger
     }
 
     def "sum values of try sequence or return the first failure"() {
@@ -166,7 +166,7 @@ class Workshop extends Specification {
         Function<Person, Integer> estimateIncome = {
             switch (it.id) {
                 case 1:
-                    throw new RuntimeException()
+                    throw new CannotEstimateIncome()
                 default:
                     return 30
             }
@@ -181,8 +181,9 @@ class Workshop extends Specification {
 
         then:
         withIncome.success
+        withIncome.get() == 30
         withoutIncome.failure
-        withoutIncome.getCause().class == CannotEstimateIncome
+        withoutIncome.cause.class == CannotEstimateIncome
     }
 
     def "get person from database, and then try to estimate income wrapped with Try"() {
@@ -192,7 +193,7 @@ class Workshop extends Specification {
                 case 1:
                     return Try.failure(new CannotEstimateIncome())
                 default:
-                    return Try.success(20)
+                    return Try.success(30)
             }
         }
         and:
@@ -205,8 +206,9 @@ class Workshop extends Specification {
 
         then:
         withIncome.success
+        withIncome.get() == 30
         withoutIncome.failure
-        withoutIncome.getCause().class == CannotEstimateIncome
+        withoutIncome.cause.class == CannotEstimateIncome
     }
 
     def "performing side-effects: try to parse a number; if success - increment counter, otherwise do nothing"() {

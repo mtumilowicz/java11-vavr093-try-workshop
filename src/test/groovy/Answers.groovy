@@ -115,7 +115,7 @@ class Answers extends Specification {
         one.success
         one.get() == 1
         fail.failure
-        fail.getCause().class == CannotParseInteger
+        fail.cause.class == CannotParseInteger
     }
 
     def "sum values of try sequence or return the first failure"() {
@@ -189,8 +189,9 @@ class Answers extends Specification {
 
         then:
         withIncome.success
+        withIncome.get() == 30
         withoutIncome.failure
-        withoutIncome.getCause().class == CannotEstimateIncome
+        withoutIncome.cause.class == CannotEstimateIncome
     }
 
     def "get person from database, and then try to estimate income wrapped with Try"() {
@@ -200,7 +201,7 @@ class Answers extends Specification {
                 case 1:
                     return Try.failure(new CannotEstimateIncome())
                 default:
-                    return Try.success(20)
+                    return Try.success(30)
             }
         }
         and:
@@ -215,8 +216,9 @@ class Answers extends Specification {
 
         then:
         withIncome.success
+        withIncome.get() == 30
         withoutIncome.failure
-        withoutIncome.getCause().class == CannotEstimateIncome
+        withoutIncome.cause.class == CannotEstimateIncome
     }
 
     def "performing side-effects: try to parse a number; if success - increment counter, otherwise do nothing"() {
