@@ -162,7 +162,7 @@ class Answers extends Specification {
         and:
         def spendingByMonthExceptional = {
             switch (it) {
-                case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
+                case Month.MARCH: throw new RuntimeException('Expenses in March cannot be loaded.')
                 default: it.getValue()
             }
         }
