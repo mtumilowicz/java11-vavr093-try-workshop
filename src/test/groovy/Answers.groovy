@@ -418,7 +418,7 @@ class Answers extends Specification {
         byIdRecovered.get() == 'from backup'
     }
 
-    def "recovery: CacheSynchronization - default answer, CacheUserCannotBeFound - database request, DatabaseConnectionProblem - default response"() {
+    def "recovery: CacheSynchronization/DatabaseConnectionProblem - default answer, CacheUserCannotBeFound - database request"() {
         given:
         def userFromCache = 1
         def databaseConnection = 2

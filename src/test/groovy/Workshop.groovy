@@ -73,8 +73,8 @@ class Workshop extends Specification {
         Try<Integer> dived = Try.of({ -1 }) // wrap here
 
         then:
-        false // verify success here, hint: isSuccess
-        false // verify value here, hint: get
+        dived.success
+        dived.get() == 2
     }
 
     def "wrap div (4 / 0) with try and verify failure and cause"() {
@@ -85,8 +85,8 @@ class Workshop extends Specification {
         Try<Integer> fail = Try.of({ -1 }) // wrap here
 
         then:
-        false // verify failure here, hint: isFailure()
-        false // verify failure class here, hint: getCause(), .class
+        fail.failure
+        fail.cause.class == ArithmeticException
     }
 
     def "wrap parseInt with try, and invoke it on 1 and 'a', then verify success and failure"() {
@@ -98,16 +98,16 @@ class Workshop extends Specification {
         Try<Integer> notParsed = Try.of({ -1 }) // wrap here, hint: parse.apply('a')
 
         then:
-        false // verify success here
-        false // verify value here
-        false // verify failure here, hint: isFailure()
-        false // verify failure class here, hint: getCause(), .class
+        parsed.success
+        parsed.get() == 1
+        notParsed.failure
+        notParsed.cause.class == NumberFormatException
     }
 
     def "checked exceptions handling: wrap method that throws checked exception"() {
         given:
-        Try<Integer> one = Parser.parse("1") // rewrite Parser.parse 
-        Try<Integer> fail = Parser.parse("a") // rewrite Parser.parse
+        Try<Integer> one = Parser.parse('1') // rewrite Parser.parse 
+        Try<Integer> fail = Parser.parse('a') // rewrite Parser.parse
 
         expect:
         one.success
@@ -360,7 +360,7 @@ class Workshop extends Specification {
         backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
-    def "if database connection error, recover with default response"() {
+    def "recovery: if database connection error, recover with default response"() {
         given:
         def defaultResponse = 'default response'
         def databaseConnectionError = 2
@@ -408,9 +408,9 @@ class Workshop extends Specification {
         when:
         Function<Integer, Try<String>> findById = {
             CacheRepository.findById(it)
-            // use: CacheSynchronization, "cache synchronization with database, try again later", hint: recover
+            // use: CacheSynchronization, 'cache synchronization with database, try again later', hint: recover
             // use: CacheUserCannotBeFound, DatabaseRepository.findById(it.getUserId()), hint: recoverWith
-            // use: DatabaseConnectionProblem, "cannot connect to database", hint: recover
+            // use: DatabaseConnectionProblem, 'cannot connect to database', hint: recover
         }
 
         then:
@@ -441,7 +441,7 @@ class Workshop extends Specification {
 
     def "pattern matching: map third-party library exceptions to domain exceptions with same message"() {
         given:
-        Try<Integer> fail = Try.of({ Integer.parseInt("a") })
+        Try<Integer> fail = Try.of({ Integer.parseInt('a') })
 
         when:
         /*
