@@ -441,6 +441,30 @@ class Answers extends Specification {
         findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
         findById.apply(databaseConnection).get() == 'cannot connect to database'
     }
+    
+    def "vavr try-finally"() {
+        given:
+        def counter = 0
+        def increment = {counter++}
+        def throwException = 1
+        def success = 2
+        and:
+        Function<Integer, Integer> operation = {
+            if (it == throwException) {
+                throw new RuntimeException()
+            }
+            it
+        }
+        
+        when:
+        Try.of({operation.apply(throwException)})
+            .andFinally(increment)        
+        Try.of({operation.apply(success)})
+            .andFinally(increment)
+        
+        then:
+        counter == 2
+    }
 
     def "vavr try with resources: success"() {
         when:

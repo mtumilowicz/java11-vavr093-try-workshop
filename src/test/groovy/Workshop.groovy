@@ -5,7 +5,6 @@ import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
-import java.nio.file.NoSuchFileException
 import java.util.function.BinaryOperator
 import java.util.function.Function
 import java.util.function.Predicate 
@@ -420,6 +419,30 @@ class Workshop extends Specification {
         findById.apply(userFromDatabase).get() == 'from database'
         findById.apply(cacheSynchronization).get() == 'cache synchronization with database, try again later'
         findById.apply(databaseConnection).get() == 'cannot connect to database'
+    }
+
+    def "vavr try-finally"() {
+        given:
+        def counter = 0
+        def increment = {counter++}
+        def throwException = 1
+        def success = 2
+        and:
+        Function<Integer, Integer> operation = {
+            if (it == throwException) {
+                throw new RuntimeException()
+            }
+            it
+        }
+
+        when:
+        // perform increment regardless failure (always), hint: andFinally, use increment
+        Try.of({operation.apply(throwException)})
+        // perform increment regardless failure (always), hint: andFinally, use increment
+        Try.of({operation.apply(success)})
+
+        then:
+        counter == 2
     }
 
     def "vavr try with resources: success"() {
