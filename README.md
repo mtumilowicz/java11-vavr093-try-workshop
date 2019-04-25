@@ -45,7 +45,28 @@ computed value
 * performing side-effects
     * on success: 
         * `Try<T> andThen(Runnable runnable)`
+            ```
+            Objects.requireNonNull(consumer, "consumer is null");
+            if (isFailure()) {
+                return this;
+            } else {
+                try {
+                    consumer.accept(get());
+                    return this;
+                } catch (Throwable t) {
+                    return new Failure<>(t);
+                }
+            }
+            ```
         * `onSuccess(Consumer<? super T> action)`
+            ```
+            Objects.requireNonNull(action, "action is null");
+            if (isSuccess()) {
+                action.accept(get());
+            }
+            return this;
+            ```
+        * `andThen` vs `onSuccess` - exceptions in `onSuccess` are not wrapped with try
     * on failure: 
         * `Try<T> onFailure(Consumer<? super Throwable> action)`
 * mapping with partial function
