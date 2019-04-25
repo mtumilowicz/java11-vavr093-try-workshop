@@ -152,11 +152,12 @@ class Answers extends Specification {
         fail.cause.message == 'For input string: "a"'
     }
 
-    def "average"() {
+    def "count average expenses in a year (by month) or return first failure"() {
         given:
         def spendingByMonthExceptional = {
             switch (it) {
                 case Month.MARCH: throw new RuntimeException("Expenses in March cannot be loaded.")
+                case Month.APRIL: throw new RuntimeException("Expenses in April cannot be loaded.")
                 default: it.getValue()
             }
         }
@@ -176,16 +177,17 @@ class Answers extends Specification {
         }
 
         when:
-        Seq<Try<Integer>> collect1 = expensesByMonthMap.apply(spendingByMonth).values()
-        Seq<Try<Integer>> collect2 = expensesByMonthMap.apply(spendingByMonthExceptional).values()
+        Seq<Try<Integer>> withoutFailure = expensesByMonthMap.apply(spendingByMonth).values()
+        Seq<Try<Integer>> withFailure = expensesByMonthMap.apply(spendingByMonthExceptional).values()
 
         and:
-        def sequence1 = Try.sequence(collect1)
-        def sequence2 = Try.sequence(collect2)
+        def sequence1 = Try.sequence(withoutFailure)
+        def sequence2 = Try.sequence(withFailure)
         
         then:
         sequence1.success
         sequence1.map({it.average()}).get() == Option.some(6.5D)
+        and:
         sequence2.failure
         sequence2.cause.class == RuntimeException
         sequence2.cause.message == "Expenses in March cannot be loaded."
