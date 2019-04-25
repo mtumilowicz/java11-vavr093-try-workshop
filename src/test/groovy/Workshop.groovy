@@ -234,11 +234,29 @@ class Workshop extends Specification {
 
         when:
         DatabaseRepository.findById(existingId) // increment counter here, hint: onSuccess
-        DatabaseRepository.findById(databaseConnectionProblem) // increment counter here, hint: onSuccess
+        DatabaseRepository.findById(databaseConnectionProblem) // increment counter here, hint: onFailure
 
         then:
         successCounter == 1
         failureCounter == 1
+    }
+
+    def "performing side-effects: difference between onSuccess and andThen - exceptions in onSuccess"() {
+        when:
+        Try.success(1).onSuccess({throw new RuntimeException()})
+
+        then:
+        -1 // verify that RuntimeException was thrown and not caught, hint: thrown()
+    }
+
+    def "performing side-effects: difference between onSuccess and andThen - exceptions in andThen"() {
+        when:
+        def tried = Try.success(1).andThen({ throw new RuntimeException() })
+
+        then:
+        // verify that RuntimeException was caught
+        -1 // verify failure, hint: isFailure
+        -1 // verify that RuntimeException was caught, hint: getCause, class
     }
 
     def "performing side-effects: get person from database, change age and then try to save"() {

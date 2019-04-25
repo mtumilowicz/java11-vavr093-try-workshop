@@ -253,6 +253,23 @@ class Answers extends Specification {
         successCounter == 1
         failureCounter == 1
     }
+    
+    def "performing side-effects: difference between onSuccess and andThen - exceptions in onSuccess"() {
+        when:
+        Try.success(1).onSuccess({throw new RuntimeException()})
+        
+        then:
+        thrown(RuntimeException)
+    }
+
+    def "performing side-effects: difference between onSuccess and andThen - exceptions in andThen"() {
+        when:
+        def tried = Try.success(1).andThen({ throw new RuntimeException() })
+
+        then:
+        tried.failure
+        tried.cause.class == RuntimeException
+    }
 
     def "performing side-effects: get person from database, change age and then try to save"() {
         given:
