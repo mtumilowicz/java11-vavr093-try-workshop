@@ -61,7 +61,7 @@ class Answers extends Specification {
 
     def "conversion: try -> option"() {
         given:
-        Try<Integer> success = Try.of({ 1 })
+        Try<Integer> success = Try.of { 1 }
         Try<Integer> fail = Try.failure(new IllegalStateException())
 
         when:
@@ -78,7 +78,7 @@ class Answers extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> dived = Try.of({ div.apply(4, 2) })
+        Try<Integer> dived = Try.of { div.apply(4, 2) }
 
         then:
         dived.success
@@ -90,7 +90,7 @@ class Answers extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> fail = Try.of({ div.apply(4, 0) })
+        Try<Integer> fail = Try.of { div.apply(4, 0) }
 
         then:
         fail.failure
@@ -102,8 +102,8 @@ class Answers extends Specification {
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of({ parseInt.apply('1') })
-        Try<Integer> notParsed = Try.of({ parseInt.apply('a') })
+        Try<Integer> parsed = Try.of { parseInt.apply('1') }
+        Try<Integer> notParsed = Try.of { parseInt.apply('a') }
 
         then:
         parsed.success
@@ -127,12 +127,12 @@ class Answers extends Specification {
     def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed1 = Try.of({ parse.apply('1') })
-        Try<Integer> parsed2 = Try.of({ parse.apply('2') })
-        Try<Integer> parsed3 = Try.of({ parse.apply('3') })
-        Try<Integer> parsed4 = Try.of({ parse.apply('4') })
-        Try<Integer> failure1 = Try.of({ parse.apply('a') })
-        Try<Integer> failure2 = Try.of({ parse.apply('b') })
+        Try<Integer> parsed1 = Try.of { parse.apply('1') }
+        Try<Integer> parsed2 = Try.of { parse.apply('2') }
+        Try<Integer> parsed3 = Try.of { parse.apply('3') }
+        Try<Integer> parsed4 = Try.of { parse.apply('4') }
+        Try<Integer> failure1 = Try.of { parse.apply('a') }
+        Try<Integer> failure2 = Try.of { parse.apply('b') }
 
         and:
         List<Try<Integer>> from1To4 = List.of(parsed1, parsed2, parsed3, parsed4)
@@ -140,9 +140,9 @@ class Answers extends Specification {
 
         when:
         Try<Number> sum = Try.sequence(from1To4)
-                .map({ it.sum() })
+                .map { it.sum() }
         Try<Number> fail = Try.sequence(all)
-                .map({ it.sum() })
+                .map { it.sum() }
 
         then:
         sum.success
@@ -173,7 +173,7 @@ class Answers extends Specification {
                 HashMap.ofAll(Arrays.stream(Month.values())
                         .collect(Collectors.toMap(
                                 Function.identity(),
-                                { month -> Try.of({ spendingIn(month) }) })))
+                                { month -> Try.of { spendingIn(month) } })))
         }
 
         when:
@@ -182,9 +182,9 @@ class Answers extends Specification {
 
         and:
         Try<Option<Double>> average = Try.sequence(withoutFailure)
-                .map({ it.average() })
+                .map { it.average() }
         Try<Option<Double>> firstFailure = Try.sequence(withFailure)
-                .map({ it.average() })
+                .map { it.average() }
 
         then:
         average.success
@@ -202,10 +202,10 @@ class Answers extends Specification {
         def letter = 'a'
 
         when:
-        Try<Integer> squared = Try.of({ parse.apply(number) })
-                .map({ it * it })
-        Try<Integer> fail = Try.of({ parse.apply(letter) })
-                .map({ it * it })
+        Try<Integer> squared = Try.of { parse.apply(number) }
+                .map { it * it }
+        Try<Integer> fail = Try.of { parse.apply(letter) }
+                .map { it * it }
 
         then:
         squared.success
@@ -231,9 +231,9 @@ class Answers extends Specification {
 
         when:
         Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
-                .map({ estimateIncome.apply(it) })
+                .map { estimateIncome.apply(it) }
         Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
-                .map({ estimateIncome.apply(it) })
+                .map { estimateIncome.apply(it) }
 
         then:
         withIncome.success
@@ -258,9 +258,9 @@ class Answers extends Specification {
 
         when:
         Try<Integer> withIncome = PersonRepository.findById(personWithIncome)
-                .flatMap({ estimateIncome.apply(it) })
+                .flatMap { estimateIncome.apply(it) }
         Try<Integer> withoutIncome = PersonRepository.findById(personWithoutIncome)
-                .flatMap({ estimateIncome.apply(it) })
+                .flatMap { estimateIncome.apply(it) }
 
         then:
         withIncome.success
@@ -277,8 +277,10 @@ class Answers extends Specification {
         def successCounter = 0
 
         when:
-        Try.of({ parse.apply(number) }).andThen({ successCounter++ })
-        Try.of({ parse.apply(letter) }).andThen({ successCounter++ })
+        Try.of { parse.apply(number) }
+                .andThen { successCounter++ }
+        Try.of { parse.apply(letter) }
+                .andThen { successCounter++ }
 
         then:
         successCounter == 1
@@ -293,9 +295,9 @@ class Answers extends Specification {
 
         when:
         DatabaseRepository.findById(existingId)
-                .onSuccess({ successCounter++ })
+                .onSuccess { successCounter++ }
         DatabaseRepository.findById(databaseConnectionProblem)
-                .onFailure({ failureCounter++ })
+                .onFailure { failureCounter++ }
 
         then:
         successCounter == 1
@@ -304,7 +306,7 @@ class Answers extends Specification {
 
     def "performing side-effects: difference between onSuccess and andThen - exceptions in onSuccess"() {
         when:
-        Try.success(1).onSuccess({ throw new RuntimeException() })
+        Try.success(1).onSuccess { throw new RuntimeException() }
 
         then:
         thrown(RuntimeException)
@@ -312,7 +314,7 @@ class Answers extends Specification {
 
     def "performing side-effects: difference between onSuccess and andThen - exceptions in andThen"() {
         when:
-        def tried = Try.success(1).andThen({ throw new RuntimeException() })
+        def tried = Try.success(1).andThen { throw new RuntimeException() }
 
         then:
         tried.failure
@@ -326,22 +328,27 @@ class Answers extends Specification {
         def connectionProblemId = 3
         def fakeId = 4
 
+        and:
+        Consumer<Person> saveToDatabase = {
+            PersonRepository.save(it)
+        }
+
         when:
         Try<Person> tried1 = PersonRepository.findById(canBeSavedId)
-                .map({ it.withAge(1) })
-                .andThen({ PersonRepository.save(it) } as Consumer)
+                .map { it.withAge(1) }
+                .andThen saveToDatabase
         and:
         Try<Person> tried2 = PersonRepository.findById(userModifiedId)
-                .map({ it.withAge(2) })
-                .andThen({ PersonRepository.save(it) } as Consumer)
+                .map { it.withAge(2) }
+                .andThen saveToDatabase
         and:
         Try<Person> tried3 = PersonRepository.findById(connectionProblemId)
-                .map({ it.withAge(3) })
-                .andThen({ PersonRepository.save(it) } as Consumer)
+                .map { it.withAge(3) }
+                .andThen saveToDatabase
         and:
         Try<Person> tried4 = PersonRepository.findById(fakeId)
-                .map({ it.withAge(4) })
-                .andThen({ PersonRepository.save(it) } as Consumer)
+                .map { it.withAge(4) }
+                .andThen saveToDatabase
 
         then:
         tried1.success
@@ -363,14 +370,16 @@ class Answers extends Specification {
         String two = '2'
 
         and:
-        PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
-                .partial({ it != 0 })
-        PartialFunction<Integer, Integer> add = Function1.of({ 5 + it })
-                .partial({ true })
+        PartialFunction<Integer, Integer> div = Function1.of { 5 / it }
+                .partial { it != 0 }
+        PartialFunction<Integer, Integer> add = Function1.of { 5 + it }
+                .partial { true }
 
         when:
-        Try<Integer> summed = Try.of({ parse.apply(two) }).collect(add)
-        Try<Integer> dived = Try.of({ parse.apply(zero) }).collect(div)
+        Try<Integer> summed = Try.of { parse.apply(two) }
+                .collect(add)
+        Try<Integer> dived = Try.of { parse.apply(zero) }
+                .collect(div)
 
         then:
         summed.success
@@ -384,8 +393,8 @@ class Answers extends Specification {
     def "if value > 2 do nothing, otherwise failure with NoSuchElementException"() {
         given:
         Predicate<Integer> moreThanTwo = { it > 2 }
-        Try<Integer> three = Try.of({ 3 })
-        Try<Integer> two = Try.of({ 2 })
+        Try<Integer> three = Try.of { 3 }
+        Try<Integer> two = Try.of { 2 }
 
         when:
         Try<Integer> filteredThree = three.filter(moreThanTwo)
@@ -404,12 +413,17 @@ class Answers extends Specification {
         given:
         def adult = Person.builder().age(20).build()
         def kid = Person.builder().age(10).build()
-        Try<Person> adultTry = Try.of({ adult })
-        Try<Person> kidTry = Try.of({ kid })
+        Try<Person> adultTry = Try.of { adult }
+        Try<Person> kidTry = Try.of { kid }
+
+        and:
+        Supplier<NotAnAdultException> exceptionSupplier = {
+            new NotAnAdultException()
+        }
 
         when:
-        Try<Person> filteredAdult = adultTry.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
-        Try<Person> filteredKid = kidTry.filter(Person.isAdult(), { new NotAnAdultException() } as Supplier)
+        Try<Person> filteredAdult = adultTry.filter(Person.isAdult(), exceptionSupplier)
+        Try<Person> filteredKid = kidTry.filter(Person.isAdult(), exceptionSupplier)
 
         then:
         filteredAdult.success
@@ -427,7 +441,9 @@ class Answers extends Specification {
 
         and:
         Function<Integer, Try<String>> findById = {
-            id -> CacheRepository.findById(id).orElse({ DatabaseRepository.findById(id) })
+            id ->
+                CacheRepository.findById(id)
+                        .orElse { DatabaseRepository.findById(id) }
         }
 
         when:
@@ -522,9 +538,9 @@ class Answers extends Specification {
         }
 
         when:
-        Try.of({ operation.apply(throwException) })
+        Try.of { operation.apply(throwException) }
                 .andFinally(increment)
-        Try.of({ operation.apply(success) })
+        Try.of { operation.apply(success) }
                 .andFinally(increment)
 
         then:
@@ -552,11 +568,14 @@ class Answers extends Specification {
 
     def "pattern matching: map third-party library exceptions to domain exceptions with same message"() {
         given:
-        Try<Integer> fail = Try.of({ Integer.parseInt("a") })
+        Try<Integer> fail = Try.of { Integer.parseInt('a') }
+
+        and:
+        Function<Throwable, CannotParseInteger> mapper = { new CannotParseInteger(it.message) }
 
         when:
         Try<Integer> mapped = fail.mapFailure(
-                Case($(instanceOf(NumberFormatException.class)), { new CannotParseInteger(it.message) } as Function)
+                Case($(instanceOf(NumberFormatException.class)), mapper)
         )
 
         then:

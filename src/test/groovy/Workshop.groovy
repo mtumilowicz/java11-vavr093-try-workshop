@@ -10,8 +10,10 @@ import spock.lang.Specification
 
 import java.time.Month
 import java.util.function.BinaryOperator
+import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 /**
@@ -58,7 +60,7 @@ class Workshop extends Specification {
 
     def "conversion: try -> option"() {
         given:
-        Try<Integer> success = Try.of({ 1 })
+        Try<Integer> success = Try.of { 1 }
         Try<Integer> fail = Try.failure(new IllegalStateException())
 
         when:
@@ -69,13 +71,13 @@ class Workshop extends Specification {
         successOption == Option.some(1)
         failOption == Option.none()
     }
-    
+
     def "wrap div (4 / 2) with try and verify success and value"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> dived = Try.of({ -1 }) // wrap here
+        Try<Integer> dived = Try.of { -1 } // wrap here
 
         then:
         dived.success
@@ -87,7 +89,7 @@ class Workshop extends Specification {
         BinaryOperator<Integer> div = { a, b -> a / b }
 
         when:
-        Try<Integer> fail = Try.of({ -1 }) // wrap here
+        Try<Integer> fail = Try.of { -1 } // wrap here
 
         then:
         fail.failure
@@ -99,8 +101,8 @@ class Workshop extends Specification {
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of({ -1 }) // wrap here, hint: parse.apply('1')
-        Try<Integer> notParsed = Try.of({ -1 }) // wrap here, hint: parse.apply('a')
+        Try<Integer> parsed = Try.of { -1 } // wrap here, hint: parse.apply('1')
+        Try<Integer> notParsed = Try.of { -1 } // wrap here, hint: parse.apply('a')
 
         then:
         parsed.success
@@ -124,12 +126,12 @@ class Workshop extends Specification {
     def "sum values of try sequence or return the first failure"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
-        Try<Integer> parsed1 = Try.of({ parse.apply('1') })
-        Try<Integer> parsed2 = Try.of({ parse.apply('2') })
-        Try<Integer> parsed3 = Try.of({ parse.apply('3') })
-        Try<Integer> parsed4 = Try.of({ parse.apply('4') })
-        Try<Integer> failure1 = Try.of({ parse.apply('a') })
-        Try<Integer> failure2 = Try.of({ parse.apply('b') })
+        Try<Integer> parsed1 = Try.of { parse.apply('1') }
+        Try<Integer> parsed2 = Try.of { parse.apply('2') }
+        Try<Integer> parsed3 = Try.of { parse.apply('3') }
+        Try<Integer> parsed4 = Try.of { parse.apply('4') }
+        Try<Integer> failure1 = Try.of { parse.apply('a') }
+        Try<Integer> failure2 = Try.of { parse.apply('b') }
 
         and:
         List<Try<Integer>> from1To4 = List.of(parsed1, parsed2, parsed3, parsed4)
@@ -168,7 +170,7 @@ class Workshop extends Specification {
                 HashMap.ofAll(Arrays.stream(Month.values())
                         .collect(Collectors.toMap(
                                 Function.identity(),
-                                { month -> Try.of({ spendingIn(month) }) })))
+                                { month -> Try.of { spendingIn(month) } })))
         }
 
         when:
@@ -187,7 +189,7 @@ class Workshop extends Specification {
         firstFailure.cause.class == RuntimeException
         firstFailure.cause.message == "Expenses in March cannot be loaded."
     }
-    
+
     def "parse number then if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
@@ -264,8 +266,8 @@ class Workshop extends Specification {
         def successCounter = 0
 
         when:
-        Try.of({ parse.apply(number) }) // increment counter here, hint: andThen
-        Try.of({ parse.apply(letter) }) // increment counter here, hint: andThen
+        Try.of { parse.apply(number) } // increment counter here, hint: andThen
+        Try.of { parse.apply(letter) } // increment counter here, hint: andThen
 
         then:
         successCounter == 1
@@ -289,7 +291,7 @@ class Workshop extends Specification {
 
     def "performing side-effects: difference between onSuccess and andThen - exceptions in onSuccess"() {
         when:
-        Try.success(1).onSuccess({throw new RuntimeException()})
+        Try.success(1).onSuccess { throw new RuntimeException() }
 
         then:
         -1 // verify that RuntimeException was thrown and not caught, hint: thrown()
@@ -297,7 +299,7 @@ class Workshop extends Specification {
 
     def "performing side-effects: difference between onSuccess and andThen - exceptions in andThen"() {
         when:
-        def tried = Try.success(1).andThen({ throw new RuntimeException() })
+        def tried = Try.success(1).andThen { throw new RuntimeException() }
 
         then:
         // verify that RuntimeException was caught
@@ -311,6 +313,11 @@ class Workshop extends Specification {
         def userModifiedId = 2
         def connectionProblemId = 3
         def fakeId = 4
+
+        and:
+        Consumer<Person> saveToDatabase = {
+            PersonRepository.save(it)
+        }
 
         when:
         Try<Person> tried1 = PersonRepository.findById(canBeSavedId) // change age and try to save, hint: map, andThen
@@ -341,14 +348,14 @@ class Workshop extends Specification {
         String two = '2'
 
         and:
-        PartialFunction<Integer, Integer> div = Function1.of({ 5 / it })
-                .partial({ it != 0 })
-        PartialFunction<Integer, Integer> add = Function1.of({ 5 + it })
-                .partial({ true })
+        PartialFunction<Integer, Integer> div = Function1.of { 5 / it }
+                .partial { it != 0 }
+        PartialFunction<Integer, Integer> add = Function1.of { 5 + it }
+                .partial { true }
 
         when:
-        Try<Integer> summed = Try.of({ parse.apply(two) }) // convert here, hint: collect, use add()
-        Try<Integer> dived = Try.of({ parse.apply(zero) }) // convert here, hint: collect, use div()
+        Try<Integer> summed = Try.of { parse.apply(two) } // convert here, hint: collect, use add()
+        Try<Integer> dived = Try.of { parse.apply(zero) } // convert here, hint: collect, use div()
 
         then:
         summed.success
@@ -362,8 +369,8 @@ class Workshop extends Specification {
     def "if value > 2 do nothing, otherwise failure with NoSuchElementException"() {
         given:
         Predicate<Integer> moreThanTwo = { it > 2 }
-        Try<Integer> three = Try.of({ 3 })
-        Try<Integer> two = Try.of({ 2 })
+        Try<Integer> three = Try.of { 3 }
+        Try<Integer> two = Try.of { 2 }
 
         when:
         Try<Integer> filteredThree = three // filter here using moreThanTwo, hint: filter
@@ -382,12 +389,17 @@ class Workshop extends Specification {
         given:
         def adult = Person.builder().age(20).build()
         def kid = Person.builder().age(10).build()
-        Try<Person> adultTry = Try.of({ adult })
-        Try<Person> kidTry = Try.of({ kid })
+        Try<Person> adultTry = Try.of { adult }
+        Try<Person> kidTry = Try.of { kid }
+
+        and:
+        Supplier<NotAnAdultException> exceptionSupplier = {
+            new NotAnAdultException()
+        }
 
         when:
-        Try<Person> filteredAdult = adultTry  // filter here using NotAnAdultException, hint: filter
-        Try<Person> filteredKid = kidTry  // filter here using NotAnAdultException, hint: filter
+        Try<Person> filteredAdult = adultTry  // filter here using exceptionSupplier, hint: filter
+        Try<Person> filteredKid = kidTry  // filter here using exceptionSupplier, hint: filter
 
         then:
         filteredAdult.success
@@ -402,12 +414,12 @@ class Workshop extends Specification {
         def fromDatabaseId = 4
         def fromCacheId = 20
         def databaseConnectionProblemId = 2
-        
+
         and:
         /*
         use: CacheRepository.findById, DatabaseRepository.findById, hint: orElse
          */
-        Function<Integer, Try<String>> findById = { Try.success(1)}
+        Function<Integer, Try<String>> findById = { Try.success(1) }
 
         when:
         Try<String> fromDatabase = findById.apply(fromDatabaseId)
@@ -488,7 +500,7 @@ class Workshop extends Specification {
     def "vavr try-finally"() {
         given:
         def counter = 0
-        def increment = {counter++}
+        def increment = { counter++ }
         def throwException = 1
         def success = 2
         and:
@@ -501,9 +513,9 @@ class Workshop extends Specification {
 
         when:
         // perform increment regardless failure (always), hint: andFinally, use increment
-        Try.of({operation.apply(throwException)})
+        Try.of { operation.apply(throwException) }
         // perform increment regardless failure (always), hint: andFinally, use increment
-        Try.of({operation.apply(success)})
+        Try.of { operation.apply(success) }
 
         then:
         counter == 2
@@ -530,11 +542,14 @@ class Workshop extends Specification {
 
     def "pattern matching: map third-party library exceptions to domain exceptions with same message"() {
         given:
-        Try<Integer> fail = Try.of({ Integer.parseInt('a') })
+        Try<Integer> fail = Try.of { Integer.parseInt('a') }
 
+        and:
+        Function<Throwable, CannotParseInteger> mapper = { new CannotParseInteger(it.message) }
+        
         when:
         /*
-        use: pattern matching, NumberFormatException, CannotParseInteger
+        use: pattern matching, NumberFormatException, mapper
         hint: mapFailure, Case, $, instanceOf
          */
         Try<Integer> mapped = fail
