@@ -72,6 +72,9 @@ computed value
 * mapping with partial function
     * `Try<R> collect(PartialFunction<? super T, ? extends R> partialFunction)`
     * if function is not defined at a value - returns `Failure(NoSuchElementException)`
+* map, flatMap on `Try<R>`
+    * `Try<U> map(f: R -> U)`
+    * `Try<U> flatMap(f: R -> Try<U>)`
 * we could filter value (same as `Option`)
 * lazy alternative
     * `Try<T> orElse(Supplier<? extends Try<? extends T>> supplier)`
