@@ -462,7 +462,7 @@ class Answers extends Specification {
         backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
-    def "recovery: if database connection error, recover with default response"() {
+    def "recovery: if DatabaseConnectionProblem, recover with default response"() {
         given:
         def defaultResponse = 'default response'
         def databaseConnectionError = 2
@@ -470,9 +470,9 @@ class Answers extends Specification {
 
         when:
         Try<String> byIdSuccess = DatabaseRepository.findById(realId)
-                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
+                .recover(DatabaseConnectionProblem.class, defaultResponse)
         Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
-                .recover(DatabaseConnectionProblem.class, { defaultResponse } as Function)
+                .recover(DatabaseConnectionProblem.class, defaultResponse)
 
         then:
         byIdSuccess.success
@@ -480,6 +480,29 @@ class Answers extends Specification {
         and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
+    }
+
+    def "recovery: if DatabaseConnectionProblem, recover with exception info"() {
+        given:
+        def defaultResponse = 'default response'
+        def databaseConnectionError = 2
+        def realId = 1
+        Function<DatabaseConnectionProblem, String> responseFunction = {
+            defaultResponse + ": ${it}"
+        }
+
+        when:
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId)
+                .recover(DatabaseConnectionProblem.class, responseFunction)
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
+                .recover(DatabaseConnectionProblem.class, responseFunction)
+
+        then:
+        byIdSuccess.success
+        byIdSuccess.get() == 'from database'
+        and:
+        byIdRecovered.success
+        byIdRecovered.get() == 'default response: DatabaseConnectionProblem(userId=2)'
     }
 
     def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {

@@ -437,7 +437,7 @@ class Workshop extends Specification {
         backupConnectionProblem.cause.class == DatabaseConnectionProblem
     }
 
-    def "recovery: if database connection error, recover with default response"() {
+    def "recovery: if DatabaseConnectionProblem, recover with default response"() {
         given:
         def defaultResponse = 'default response'
         def databaseConnectionError = 2
@@ -453,6 +453,26 @@ class Workshop extends Specification {
         and:
         byIdRecovered.success
         byIdRecovered.get() == defaultResponse
+    }
+
+    def "recovery: if DatabaseConnectionProblem, recover with exception info"() {
+        given:
+        def databaseConnectionError = 2
+        def realId = 1
+        Function<DatabaseConnectionProblem, String> responseFunction = {
+            "default response: ${it}"
+        }
+
+        when:
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId) // recover here with responseFunction, hint: recover
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // recover here with responseFunction, hint: recover
+
+        then:
+        byIdSuccess.success
+        byIdSuccess.get() == 'from database'
+        and:
+        byIdRecovered.success
+        byIdRecovered.get() == 'default response: DatabaseConnectionProblem(userId=2)'
     }
 
     def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {
