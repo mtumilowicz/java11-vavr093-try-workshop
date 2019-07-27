@@ -73,7 +73,7 @@ class Answers extends Specification {
         failOption == Option.none()
     }
 
-    def "wrap div (4 / 2) with try and verify success and value"() {
+    def "wrap div (4 / 2) with try"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
@@ -85,7 +85,7 @@ class Answers extends Specification {
         dived.get() == 2
     }
 
-    def "wrap div (4 / 0) with try and verify failure and cause"() {
+    def "wrap div (4 / 0) with try"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
@@ -97,7 +97,7 @@ class Answers extends Specification {
         fail.cause.class == ArithmeticException
     }
 
-    def "wrap parseInt with try, and invoke it on 1 and 'a', then verify success and failure"() {
+    def "wrap parseInt with try, and invoke it on 1 and 'a'"() {
         given:
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
@@ -195,7 +195,7 @@ class Answers extends Specification {
         firstFailure.cause.message == "Expenses in March cannot be loaded."
     }
 
-    def "parse number then if success - square it, otherwise do nothing"() {
+    def "parse number: if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -482,7 +482,7 @@ class Answers extends Specification {
         byIdRecovered.get() == defaultResponse
     }
 
-    def "recovery: if DatabaseConnectionProblem, recover with exception info"() {
+    def "recovery: if DatabaseConnectionProblem, recover with responseFunction"() {
         given:
         def defaultResponse = 'default response'
         def databaseConnectionError = 2
@@ -505,7 +505,7 @@ class Answers extends Specification {
         byIdRecovered.get() == 'default response: DatabaseConnectionProblem(userId=2)'
     }
 
-    def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {
+    def "recovery: if DatabaseConnectionProblem recover with request to the other (backup) database"() {
         given:
         def databaseConnectionError = 2
         def realId = 1

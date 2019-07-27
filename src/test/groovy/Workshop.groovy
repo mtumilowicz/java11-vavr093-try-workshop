@@ -8,12 +8,9 @@ import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.nio.file.NoSuchFileException
 import java.time.Month
-import java.util.function.BinaryOperator
-import java.util.function.Consumer
-import java.util.function.Function
-import java.util.function.Predicate
-import java.util.function.Supplier
+import java.util.function.*
 import java.util.stream.Collectors
 
 /**
@@ -72,7 +69,7 @@ class Workshop extends Specification {
         failOption == Option.none()
     }
 
-    def "wrap div (4 / 2) with try and verify success and value"() {
+    def "wrap div (4 / 2) with try"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
@@ -84,7 +81,7 @@ class Workshop extends Specification {
         dived.get() == 2
     }
 
-    def "wrap div (4 / 0) with try and verify failure and cause"() {
+    def "wrap div (4 / 0) with try"() {
         given:
         BinaryOperator<Integer> div = { a, b -> a / b }
 
@@ -96,13 +93,13 @@ class Workshop extends Specification {
         fail.cause.class == ArithmeticException
     }
 
-    def "wrap parseInt with try, and invoke it on 1 and 'a', then verify success and failure"() {
+    def "wrap parseInt with try, and invoke it on 1 and 'a'"() {
         given:
         Function<String, Integer> parseInt = { Integer.parseInt(it) }
 
         when:
-        Try<Integer> parsed = Try.of { -1 } // wrap here, hint: parse.apply('1')
-        Try<Integer> notParsed = Try.of { -1 } // wrap here, hint: parse.apply('a')
+        Try<Integer> parsed = Try.of { -1 } // wrap here, hint: parseInt.apply('1')
+        Try<Integer> notParsed = Try.of { -1 } // wrap here, hint: parseInt.apply('a')
 
         then:
         parsed.success
@@ -113,8 +110,8 @@ class Workshop extends Specification {
 
     def "checked exceptions handling: wrap method that throws checked exception"() {
         given:
-        Try<Integer> one = Parser.parse('1') // rewrite Parser.parse 
-        Try<Integer> fail = Parser.parse('a') // rewrite Parser.parse
+        Try<Integer> one = Parser.parse('1') // go to Parser.parse and implement the method
+        Try<Integer> fail = Parser.parse('a') // go to Parser.parse and implement the method
 
         expect:
         one.success
@@ -138,7 +135,7 @@ class Workshop extends Specification {
         List<Try<Integer>> all = List.of(parsed1, parsed2, parsed3, parsed4, failure1, failure2)
 
         when:
-        Try<Number> sum = from1To4 // sum here from1To3, hint: sequence, map, sum
+        Try<Number> sum = from1To4 // sum here from1To4, hint: sequence, map, sum
         Try<Number> fail = all // sum here all, hint: sequence, map, sum
 
         then:
@@ -190,7 +187,7 @@ class Workshop extends Specification {
         firstFailure.cause.message == "Expenses in March cannot be loaded."
     }
 
-    def "parse number then if success - square it, otherwise do nothing"() {
+    def "parse number: if success - square it, otherwise do nothing"() {
         given:
         Function<String, Integer> parse = { Integer.parseInt(it) }
         def number = '2'
@@ -302,7 +299,6 @@ class Workshop extends Specification {
         def tried = Try.success(1).andThen { throw new RuntimeException() }
 
         then:
-        // verify that RuntimeException was caught
         -1 // verify failure, hint: isFailure
         -1 // verify that RuntimeException was caught, hint: getCause, class
     }
@@ -417,7 +413,7 @@ class Workshop extends Specification {
 
         and:
         /*
-        use: CacheRepository.findById, DatabaseRepository.findById, hint: orElse
+        implement function: findById using: CacheRepository.findById, DatabaseRepository.findById, hint: orElse
          */
         Function<Integer, Try<String>> findById = { Try.success(1) }
 
@@ -455,7 +451,7 @@ class Workshop extends Specification {
         byIdRecovered.get() == defaultResponse
     }
 
-    def "recovery: if DatabaseConnectionProblem, recover with exception info"() {
+    def "recovery: if DatabaseConnectionProblem, recover with responseFunction"() {
         given:
         def databaseConnectionError = 2
         def realId = 1
@@ -475,7 +471,7 @@ class Workshop extends Specification {
         byIdRecovered.get() == 'default response: DatabaseConnectionProblem(userId=2)'
     }
 
-    def "recovery: if DatabaseConnectionProblem recover with request to other (backup) database"() {
+    def "recovery: if DatabaseConnectionProblem recover with request to the other (backup) database"() {
         given:
         def databaseConnectionError = 2
         def realId = 1
@@ -484,8 +480,8 @@ class Workshop extends Specification {
         /*
         use: DatabaseConnectionProblem (has field with userId), BackupRepository.findById, hint: recoverWith
          */
-        Try<String> byIdSuccess = DatabaseRepository.findById(realId)
-        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError)
+        Try<String> byIdSuccess = DatabaseRepository.findById(realId) // start chaining here
+        Try<String> byIdRecovered = DatabaseRepository.findById(databaseConnectionError) // start chaining here
 
         then:
         byIdSuccess.success
@@ -543,7 +539,7 @@ class Workshop extends Specification {
 
     def "vavr try with resources: success"() {
         when:
-        Try<String> concat = TWR.usingVavr('src/test/resources/lines.txt')
+        Try<String> concat = TWR.usingVavr('src/test/resources/lines.txt') // go to usingVavr and implement the method
 
         then:
         concat.success
@@ -552,7 +548,7 @@ class Workshop extends Specification {
 
     def "vavr try with resources: failure - file does not exists"() {
         when:
-        Try<String> concat = TWR.usingVavr('404.txt')
+        Try<String> concat = TWR.usingVavr('404.txt') // go to usingVavr and implement the method
 
         then:
         concat.failure
