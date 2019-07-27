@@ -7,8 +7,8 @@
 * https://www.vavr.io/vavr-docs/#_try
 * https://static.javadoc.io/io.vavr/vavr/0.9.3/io/vavr/control/Try.html
 * https://github.com/mtumilowicz/java11-vavr-try
-* on the workshop we will try to fix failing `Workshop`
-* answers: `Answers` (same tests as in `Workshop` but correctly solved)
+* in the workshop we will try to fix failing tests `groovy/Workshop`
+* answers: `groovy/Answers` (same tests as in `Workshop` but correctly solved)
 
 # theory in a nutshell
 * `Try` models a computation that may either result in an exception (`Throwable`), or return a successfully 
@@ -38,7 +38,7 @@ computed value
         * `None` -> `Failure(NoSuchElementException)`
 * wrapping computations
     * `static <T> Try<T> of(CheckedFunction0<? extends T> supplier)`
-    * note that we could also wrap computations that throws check exception (argument type - `CheckedFunction0`)
+    * note that we could also wrap computations that throws checked exceptions (argument type - `CheckedFunction0`)
 * conversion: `List<Try<T>>` -> `Try<List<T>>`
     * `Try.sequence(list)`
     * if any of the `Try` is `Failure`, returns first `Failure`
@@ -69,9 +69,9 @@ computed value
         * `andThen` vs `onSuccess` - exceptions in `onSuccess` are not wrapped with try
     * on failure: 
         * `Try<T> onFailure(Consumer<? super Throwable> action)`
-* mapping with partial function
+* mapping with the partial function
     * `Try<R> collect(PartialFunction<? super T, ? extends R> partialFunction)`
-    * if function is not defined at a value - returns `Failure(NoSuchElementException)`
+    * if function is not defined for the value - returns `Failure(NoSuchElementException)`
 * map, flatMap on `Try<R>`
     * `Try<U> map(f: R -> U)`
     * `Try<U> flatMap(f: R -> Try<U>)`
